@@ -64,6 +64,7 @@ model User {
   accounts      Account[]
   sessions      Session[]
   posts         Post[]
+  habits        Habit[]
 }
 
 model VerificationToken {
@@ -72,4 +73,54 @@ model VerificationToken {
   expires    DateTime
 
   @@unique([identifier, token])
+}
+
+// ============================================================================
+// Habit Tracking Models
+// ============================================================================
+
+/// Represents a habit that a user wants to track
+/// Each habit has a name, daily goal, and color for visualization
+model Habit {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  /// Daily goal amount (e.g., 8 for 8 glasses of water)
+  dailyGoal   Int      @default(1)
+  /// Hex color for heatmap visualization (e.g., "#3b82f6")
+  color       String   @default("#3b82f6")
+  /// Whether the habit is currently active
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  /// User who owns this habit
+  user    User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId  String
+  /// Daily entries for this habit
+  entries HabitEntry[]
+
+  @@index([userId])
+  @@index([userId, isActive])
+}
+
+/// Represents a daily entry for a habit
+/// Stores the count/amount for a specific day
+model HabitEntry {
+  id        String   @id @default(cuid())
+  /// The count/amount for this day (e.g., 5 glasses of water)
+  count     Int      @default(0)
+  /// Date for this entry (stored as start of day in UTC)
+  date      DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  /// The habit this entry belongs to
+  habit   Habit  @relation(fields: [habitId], references: [id], onDelete: Cascade)
+  habitId String
+
+  /// Ensure only one entry per habit per day
+  @@unique([habitId, date])
+  @@index([habitId])
+  @@index([habitId, date])
 }

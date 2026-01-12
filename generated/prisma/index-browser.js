@@ -166,6 +166,27 @@ exports.Prisma.VerificationTokenScalarFieldEnum = {
   expires: 'expires'
 };
 
+exports.Prisma.HabitScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  description: 'description',
+  dailyGoal: 'dailyGoal',
+  color: 'color',
+  isActive: 'isActive',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  userId: 'userId'
+};
+
+exports.Prisma.HabitEntryScalarFieldEnum = {
+  id: 'id',
+  count: 'count',
+  date: 'date',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  habitId: 'habitId'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -187,7 +208,9 @@ exports.Prisma.ModelName = {
   Account: 'Account',
   Session: 'Session',
   User: 'User',
-  VerificationToken: 'VerificationToken'
+  VerificationToken: 'VerificationToken',
+  Habit: 'Habit',
+  HabitEntry: 'HabitEntry'
 };
 
 /**

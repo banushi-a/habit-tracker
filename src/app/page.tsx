@@ -1,4 +1,5 @@
 import { auth } from "~/server/auth";
+import { HabitsDashboard } from "./_components/habits-dashboard";
 import { Header } from "./_components/header";
 import { Hello } from "./_components/hello";
 
@@ -8,8 +9,13 @@ export default async function Home() {
   return (
     <>
       <Header session={session} />
-      <main className="m-24 flex min-h-screen flex-col items-start justify-start">
-        {session && <Hello session={session} />}
+      <main className="m-24 flex flex-col items-start justify-start gap-8">
+        {session && (
+          <>
+            <Hello session={session} />
+            <HabitsDashboard days={30} />
+          </>
+        )}
       </main>
     </>
   );
