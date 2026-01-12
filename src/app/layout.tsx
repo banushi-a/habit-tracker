@@ -3,6 +3,7 @@ import "~/styles/globals.css";
 import { type Metadata } from "next";
 import { Manrope } from "next/font/google";
 
+import { UserPreferencesProvider } from "~/contexts/user-preferences-context";
 import { TRPCReactProvider } from "~/trpc/react";
 
 export const metadata: Metadata = {
@@ -22,7 +23,9 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${manrope.variable}`}>
       <body>
-        <TRPCReactProvider>{children}</TRPCReactProvider>
+        <UserPreferencesProvider>
+          <TRPCReactProvider>{children}</TRPCReactProvider>
+        </UserPreferencesProvider>
       </body>
     </html>
   );

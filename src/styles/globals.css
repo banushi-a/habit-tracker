@@ -4,3 +4,30 @@
   --font-sans: var(--font-manrope-sans), ui-sans-serif, system-ui, sans-serif,
     "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
 }
+
+/* Light mode (default) */
+:root {
+  --background: 0 0% 100%;
+  --foreground: 0 0% 0%;
+  --button-bg: 0 0% 90%;
+  --button-bg-hover: 0 0% 85%;
+}
+
+/* Dark mode - very dark gray instead of pure black */
+.dark {
+  --background: 0 0% 10%;
+  --foreground: 0 0% 98%;
+  --button-bg: 0 0% 100% / 0.1;
+  --button-bg-hover: 0 0% 100% / 0.2;
+}
+
+/* Smooth transitions for theme changes */
+html {
+  transition: background-color 300ms ease-in-out;
+}
+
+body {
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+  transition: color 300ms ease-in-out;
+}
