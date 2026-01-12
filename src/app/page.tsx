@@ -10,13 +10,11 @@ export default async function Home() {
     <>
       <Header session={session} />
       <main className="m-24 flex flex-col items-start justify-start">
+        <Hello session={session} />
         {session && (
-          <>
-            <Hello session={session} />
-            <div className="mt-24 w-full">
-              <HabitsDashboard days={365} />
-            </div>
-          </>
+          <div className="mt-24 w-full">
+            <HabitsDashboard days={365} />
+          </div>
         )}
       </main>
     </>

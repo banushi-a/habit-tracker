@@ -76,8 +76,18 @@ export function HabitHeatmap({
           };
           return updated;
         } else {
-          // Add new entry
-          return [...old, { date, count: newCount }];
+          // Add new entry with placeholder values (will be replaced by server response)
+          return [
+            ...old,
+            {
+              id: "temp-" + Date.now(),
+              habitId: habit.id,
+              date,
+              count: newCount,
+              createdAt: new Date(),
+              updatedAt: new Date(),
+            },
+          ];
         }
       },
     );
