@@ -17,22 +17,38 @@ type CreateHabitInput = z.infer<typeof createHabitSchema>;
 interface CreateHabitFormProps {
   onSuccess: () => void;
   onCancel: () => void;
+  habitId?: string;
+  initialData?: {
+    name: string;
+    description?: string;
+    dailyGoal: number;
+    color: string;
+  };
 }
 
 /**
- * Form component for creating a new habit with validation.
+ * Form component for creating or editing a habit with validation.
  */
-export function CreateHabitForm({ onSuccess, onCancel }: CreateHabitFormProps) {
-  const [formData, setFormData] = useState<CreateHabitInput>({
-    name: "",
-    description: "",
-    dailyGoal: 1,
-    color: "#FFB3BA", // Default to first pastel color
-  });
+export function CreateHabitForm({ onSuccess, onCancel, habitId, initialData }: CreateHabitFormProps) {
+  const [formData, setFormData] = useState<CreateHabitInput>(
+    initialData ?? {
+      name: "",
+      description: "",
+      dailyGoal: 1,
+      color: "#FFB3BA", // Default to first pastel color
+    }
+  );
   const [errors, setErrors] = useState<Partial<Record<keyof CreateHabitInput, string>>>({});
 
   const utils = api.useUtils();
   const createHabit = api.habit.create.useMutation({
+    onSuccess: () => {
+      void utils.habit.getAllActive.invalidate();
+      onSuccess();
+    },
+  });
+
+  const updateHabit = api.habit.update.useMutation({
     onSuccess: () => {
       void utils.habit.getAllActive.invalidate();
       onSuccess();
@@ -58,8 +74,17 @@ export function CreateHabitForm({ onSuccess, onCancel }: CreateHabitFormProps) {
 
     // Clear errors and submit
     setErrors({});
-    createHabit.mutate(result.data);
+    if (habitId) {
+      // Update existing habit
+      updateHabit.mutate({ id: habitId, ...result.data });
+    } else {
+      // Create new habit
+      createHabit.mutate(result.data);
+    }
   };
+
+  const isLoading = createHabit.isPending || updateHabit.isPending;
+  const error = createHabit.error || updateHabit.error;
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
@@ -148,11 +173,11 @@ export function CreateHabitForm({ onSuccess, onCancel }: CreateHabitFormProps) {
       <div className="mt-4 flex gap-3">
         <button
           type="submit"
-          disabled={createHabit.isPending}
+          disabled={isLoading}
           className="flex-1 rounded px-4 py-2 font-semibold transition-all duration-300 disabled:opacity-50"
           style={{ backgroundColor: "hsl(var(--button-bg))" }}
           onMouseEnter={(e) => {
-            if (!createHabit.isPending) {
+            if (!isLoading) {
               e.currentTarget.style.backgroundColor = "hsl(var(--button-bg-hover))";
             }
           }}
@@ -160,16 +185,16 @@ export function CreateHabitForm({ onSuccess, onCancel }: CreateHabitFormProps) {
             e.currentTarget.style.backgroundColor = "hsl(var(--button-bg))";
           }}
         >
-          {createHabit.isPending ? "Creating..." : "Create Habit"}
+          {isLoading ? (habitId ? "Updating..." : "Creating...") : (habitId ? "Update Habit" : "Create Habit")}
         </button>
         <button
           type="button"
           onClick={onCancel}
-          disabled={createHabit.isPending}
+          disabled={isLoading}
           className="rounded px-4 py-2 font-semibold transition-all duration-300 disabled:opacity-50"
           style={{ backgroundColor: "hsl(var(--button-bg))" }}
           onMouseEnter={(e) => {
-            if (!createHabit.isPending) {
+            if (!isLoading) {
               e.currentTarget.style.backgroundColor = "hsl(var(--button-bg-hover))";
             }
           }}
@@ -182,9 +207,9 @@ export function CreateHabitForm({ onSuccess, onCancel }: CreateHabitFormProps) {
       </div>
 
       {/* Error Message */}
-      {createHabit.error && (
+      {error && (
         <div className="rounded p-3 text-sm text-red-500" style={{ backgroundColor: "hsl(var(--button-bg))" }}>
-          Failed to create habit: {createHabit.error.message}
+          Failed to {habitId ? "update" : "create"} habit: {error.message}
         </div>
       )}
     </form>

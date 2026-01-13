@@ -2,6 +2,8 @@
 
 import { useMemo, useState } from "react";
 import { api } from "~/trpc/react";
+import { Modal } from "./modal";
+import { CreateHabitForm } from "./create-habit-form";
 
 interface HabitEntry {
   date: Date;
@@ -36,6 +38,7 @@ export function HabitHeatmap({
   days = 365,
 }: HabitHeatmapProps) {
   const [error, setError] = useState<string | null>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const utils = api.useUtils();
 
   const upsertEntry = api.habitEntry.upsert.useMutation({
@@ -200,39 +203,58 @@ export function HabitHeatmap({
   const dayLabels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
   return (
-    <div
-      className="inline-block w-fit rounded-lg p-4 pr-8 transition-all duration-300"
-      style={{ backgroundColor: "hsl(var(--button-bg))" }}
-    >
-      <div className="mb-4 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <h3 className="text-lg font-semibold">{habit.name}</h3>
-          <button
-            onClick={handleIncrementToday}
-            className="inline-flex h-6 w-6 items-center justify-center rounded-full text-xs transition-all duration-200"
-            style={{ backgroundColor: "hsl(var(--foreground) / 0.1)" }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor =
-                "hsl(var(--foreground) / 0.2)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor =
-                "hsl(var(--foreground) / 0.1)";
-            }}
-            title="Increment today's count"
-          >
-            ↑
-          </button>
-        </div>
-        {error && (
-          <div
-            className="rounded px-3 py-1 text-sm text-red-500"
-            style={{ backgroundColor: "hsl(var(--background))" }}
-          >
-            {error}
+    <>
+      <div
+        className="inline-block rounded-lg p-4 transition-all duration-300"
+        style={{ backgroundColor: "hsl(var(--button-bg))" }}
+      >
+        <div className="mb-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <h3 className="text-lg font-semibold">{habit.name}</h3>
+            <button
+              onClick={handleIncrementToday}
+              className="inline-flex h-6 w-6 items-center justify-center rounded-full text-xs transition-all duration-200"
+              style={{ backgroundColor: "hsl(var(--foreground) / 0.1)" }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor =
+                  "hsl(var(--foreground) / 0.2)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor =
+                  "hsl(var(--foreground) / 0.1)";
+              }}
+              title="Increment today's count"
+            >
+              ↑
+            </button>
           </div>
-        )}
-      </div>
+          <div className="flex items-center gap-3">
+            {error && (
+              <div
+                className="rounded px-3 py-1 text-sm text-red-500"
+                style={{ backgroundColor: "hsl(var(--background))" }}
+              >
+                {error}
+              </div>
+            )}
+            <button
+              onClick={() => setIsEditModalOpen(true)}
+              className="inline-flex h-6 w-6 items-center justify-center rounded-full text-xs transition-all duration-200"
+              style={{ backgroundColor: "hsl(var(--foreground) / 0.1)" }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor =
+                  "hsl(var(--foreground) / 0.2)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor =
+                  "hsl(var(--foreground) / 0.1)";
+              }}
+              title="Edit habit settings"
+            >
+              ⚙
+            </button>
+          </div>
+        </div>
       <div className="overflow-x-auto overflow-y-visible">
         <div className="flex gap-1">
           {/* Day labels column */}
@@ -341,6 +363,26 @@ export function HabitHeatmap({
           <span>More</span>
         </div>
       </div>
-    </div>
+      </div>
+
+      {/* Edit Habit Modal */}
+      <Modal
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        title="Edit Habit"
+      >
+        <CreateHabitForm
+          habitId={habit.id}
+          initialData={{
+            name: habit.name,
+            description: undefined,
+            dailyGoal: habit.dailyGoal,
+            color: habit.color,
+          }}
+          onSuccess={() => setIsEditModalOpen(false)}
+          onCancel={() => setIsEditModalOpen(false)}
+        />
+      </Modal>
+    </>
   );
 }
