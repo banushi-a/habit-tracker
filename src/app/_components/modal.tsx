@@ -29,7 +29,7 @@ export function Modal({ isOpen, onClose, children, title }: ModalProps) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
       onClick={onClose}
     >
       {/* Backdrop */}
@@ -37,13 +37,13 @@ export function Modal({ isOpen, onClose, children, title }: ModalProps) {
 
       {/* Modal Content */}
       <div
-        className="relative z-10 w-full max-w-md rounded-lg p-6"
+        className="relative z-10 w-full max-w-md rounded-lg p-4 sm:p-6"
         style={{ backgroundColor: "hsl(var(--background))" }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="mb-6 flex items-center justify-between">
-          <h2 className="text-2xl font-bold">{title}</h2>
+        <div className="mb-4 flex items-center justify-between sm:mb-6">
+          <h2 className="text-xl font-bold sm:text-2xl">{title}</h2>
           <button
             onClick={onClose}
             className="text-2xl leading-none transition-opacity hover:opacity-70"

@@ -65,9 +65,9 @@ export function HabitsDashboard({ days = 365 }: HabitsDashboardProps) {
 
   if (isLoading) {
     return (
-      <div className="flex flex-col gap-6">
+      <div className="flex flex-col gap-4 sm:gap-6">
         <div className="flex items-center justify-between">
-          <h2 className="text-3xl font-bold">Your Habits</h2>
+          <h2 className="text-2xl font-bold sm:text-3xl">Your Habits</h2>
         </div>
         <div className="flex flex-col gap-4">
           <div className="h-32 animate-pulse rounded-lg bg-white/10" />
@@ -80,9 +80,9 @@ export function HabitsDashboard({ days = 365 }: HabitsDashboardProps) {
   if (!habits || habits.length === 0) {
     return (
       <>
-        <div className="flex flex-col gap-6">
+        <div className="flex flex-col gap-4 sm:gap-6">
           <div className="flex items-center justify-between">
-            <h2 className="text-3xl font-bold">Your Habits</h2>
+            <h2 className="text-2xl font-bold sm:text-3xl">Your Habits</h2>
           </div>
           <div className="flex items-center gap-3">
             <button
@@ -100,7 +100,7 @@ export function HabitsDashboard({ days = 365 }: HabitsDashboardProps) {
               +
             </button>
             <p
-              className="text-lg"
+              className="text-base sm:text-lg"
               style={{ color: "hsl(var(--foreground) / 0.7)" }}
             >
               Create your first habit!
@@ -124,10 +124,10 @@ export function HabitsDashboard({ days = 365 }: HabitsDashboardProps) {
 
   return (
     <>
-      <div className="flex flex-col gap-6">
-        <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-4 sm:gap-6">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3">
-            <h2 className="text-3xl font-bold">Your Habits</h2>
+            <h2 className="text-2xl font-bold sm:text-3xl">Your Habits</h2>
             <button
               onClick={() => setIsCreateModalOpen(true)}
               className="inline-flex h-10 w-10 items-center justify-center rounded-full text-xl font-bold transition-all duration-300"

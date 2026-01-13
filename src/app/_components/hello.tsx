@@ -24,8 +24,8 @@ export function Hello({ session }: HelloProps) {
 
   if (!session) {
     return (
-      <div className="flex items-center gap-4">
-        <h1 className="text-4xl font-bold tracking-tight sm:text-5xl lg:text-6xl">
+      <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center">
+        <h1 className="text-3xl font-bold tracking-tight sm:text-4xl lg:text-5xl xl:text-6xl">
           Ready to Start Tracking Habits?
         </h1>
         <Link
@@ -46,7 +46,7 @@ export function Hello({ session }: HelloProps) {
   }
 
   return (
-    <h1 className="text-4xl font-bold tracking-tight sm:text-5xl lg:text-6xl">
+    <h1 className="text-3xl font-bold tracking-tight sm:text-4xl lg:text-5xl xl:text-6xl">
       {greeting.emoji} {greeting.text}, {session.user.name}
     </h1>
   );

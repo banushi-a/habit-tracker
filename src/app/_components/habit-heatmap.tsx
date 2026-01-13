@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { api } from "~/trpc/react";
 import { Modal } from "./modal";
 import { CreateHabitForm } from "./create-habit-form";
@@ -42,6 +42,8 @@ export function HabitHeatmap({
   const [error, setError] = useState<string | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const utils = api.useUtils();
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const todayCellRef = useRef<HTMLDivElement>(null);
 
   const upsertEntry = api.habitEntry.upsert.useMutation({
     onError: (err) => {
@@ -156,7 +158,8 @@ export function HabitHeatmap({
     // Calculate total days needed (from aligned start to end date)
     const totalDays =
       Math.ceil(
-        (endDate.getTime() - alignedStartDate.getTime()) / (1000 * 60 * 60 * 24),
+        (endDate.getTime() - alignedStartDate.getTime()) /
+          (1000 * 60 * 60 * 24),
       ) + 1;
 
     // Generate all days
@@ -180,7 +183,12 @@ export function HabitHeatmap({
 
     // Organize into weeks (columns) with days (rows)
     const weeks: Array<
-      Array<{ date: Date; count: number; intensity: number; isToday: boolean } | null>
+      Array<{
+        date: Date;
+        count: number;
+        intensity: number;
+        isToday: boolean;
+      } | null>
     > = [];
 
     // Pad the end to complete the current week
@@ -197,6 +205,24 @@ export function HabitHeatmap({
 
     return weeks;
   }, [entries, days, habit.dailyGoal, selectedYear]);
+
+  // Scroll to today's cell on mount or when heatmap data changes
+  useEffect(() => {
+    if (todayCellRef.current && scrollContainerRef.current) {
+      const scrollContainer = scrollContainerRef.current;
+      const todayCell = todayCellRef.current;
+
+      // Calculate the scroll position to center today's cell
+      const containerWidth = scrollContainer.clientWidth;
+      const cellLeft = todayCell.offsetLeft;
+      const cellWidth = todayCell.offsetWidth;
+
+      // Scroll to position today's cell in the center-right area
+      const scrollPosition = cellLeft - containerWidth + cellWidth + 50;
+
+      scrollContainer.scrollLeft = Math.max(0, scrollPosition);
+    }
+  }, [heatmapData]);
 
   /**
    * Get background color based on intensity and habit color
@@ -221,12 +247,12 @@ export function HabitHeatmap({
   return (
     <>
       <div
-        className="inline-block rounded-lg p-4 transition-all duration-300"
+        className="w-full rounded-lg p-3 transition-all duration-300 sm:p-4"
         style={{ backgroundColor: "hsl(var(--button-bg))" }}
       >
-        <div className="mb-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <h3 className="text-lg font-semibold">{habit.name}</h3>
+        <div className="mb-3 flex items-start justify-between sm:mb-4 sm:items-center">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <h3 className="text-base font-semibold sm:text-lg">{habit.name}</h3>
             <button
               onClick={handleIncrementToday}
               className="inline-flex h-6 w-6 items-center justify-center rounded-full text-xs transition-all duration-200"
@@ -244,10 +270,10 @@ export function HabitHeatmap({
               ↑
             </button>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-col items-end gap-2 sm:flex-row sm:items-center sm:gap-3">
             {error && (
               <div
-                className="rounded px-3 py-1 text-sm text-red-500"
+                className="rounded px-2 py-1 text-xs text-red-500 sm:px-3 sm:text-sm"
                 style={{ backgroundColor: "hsl(var(--background))" }}
               >
                 {error}
@@ -271,125 +297,137 @@ export function HabitHeatmap({
             </button>
           </div>
         </div>
-      <div className="overflow-x-auto overflow-y-visible">
-        <div className="flex gap-1">
-          {/* Day labels column */}
-          <div className="flex flex-col gap-1 pr-3">
-            {dayLabels.map((label, i) => (
-              <div
-                key={i}
-                className="flex items-center justify-end text-xs"
-                style={{
-                  height: "14px",
-                  color: "hsl(var(--foreground) / 0.7)",
-                }}
-              >
-                {i % 2 === 1 ? label : ""}{" "}
-                {/* Show only Mon, Wed, Fri labels */}
-              </div>
-            ))}
-          </div>
-
-          {/* Weeks grid */}
+        <div
+          ref={scrollContainerRef}
+          className="overflow-x-auto overflow-y-visible"
+        >
           <div className="flex gap-1">
-            {heatmapData.map((week, weekIndex) => (
-              <div key={weekIndex} className="flex flex-col gap-1 py-2">
-                {week.map((day, dayIndex) => (
-                  <div
-                    key={dayIndex}
-                    className="group relative shrink-0"
-                    style={{
-                      width: "14px",
-                      height: "14px",
-                    }}
-                  >
-                    {day ? (
-                      <>
-                        <div
-                          className={`h-full w-full rounded-sm transition-all duration-200 ${
-                            day.isToday ? "cursor-pointer" : "cursor-default"
-                          }`}
-                          style={{
-                            backgroundColor: getBackgroundColor(day.intensity),
-                            boxShadow: day.isToday
-                              ? "0 0 0 2px hsl(var(--foreground))"
-                              : "0 0 0 0 hsl(var(--foreground) / 0.5)",
-                            opacity: day.isToday ? 1 : 0.6,
-                          }}
-                          onClick={() => day.isToday && handleDayClick(day.date, day.count)}
-                          onMouseEnter={(e) => {
-                            if (day.isToday) {
-                              e.currentTarget.style.boxShadow =
-                                "0 0 0 2px hsl(var(--foreground))";
-                            }
-                          }}
-                          onMouseLeave={(e) => {
-                            if (day.isToday) {
-                              e.currentTarget.style.boxShadow =
-                                "0 0 0 2px hsl(var(--foreground))";
-                            }
-                          }}
-                        />
-                        {/* Tooltip - show above for bottom rows (Thu-Sat), below for top rows (Sun-Wed) */}
-                        <div
-                          className={`pointer-events-none absolute left-1/2 z-10 hidden -translate-x-1/2 rounded px-2 py-1 text-xs whitespace-nowrap group-hover:block ${
-                            dayIndex >= 4 ? "bottom-full mb-2" : "top-full mt-2"
-                          }`}
-                          style={{
-                            backgroundColor: "hsl(var(--foreground))",
-                            color: "hsl(var(--background))",
-                          }}
-                        >
-                          <div>{day.date.toLocaleDateString()}</div>
-                          <div>
-                            {day.count} / {habit.dailyGoal}
-                          </div>
+            {/* Day labels column */}
+            <div className="flex flex-col gap-1 pr-3">
+              {dayLabels.map((label, i) => (
+                <div
+                  key={i}
+                  className="flex items-center justify-end text-xs"
+                  style={{
+                    height: "14px",
+                    color: "hsl(var(--foreground) / 0.7)",
+                  }}
+                >
+                  {i % 2 === 1 ? label : ""}{" "}
+                  {/* Show only Mon, Wed, Fri labels */}
+                </div>
+              ))}
+            </div>
+
+            {/* Weeks grid */}
+            <div className="flex gap-1 pr-8">
+              {heatmapData.map((week, weekIndex) => (
+                <div key={weekIndex} className="flex flex-col gap-1 py-2">
+                  {week.map((day, dayIndex) => (
+                    <div
+                      key={dayIndex}
+                      ref={day?.isToday ? todayCellRef : null}
+                      className="group relative shrink-0"
+                      style={{
+                        width: "14px",
+                        height: "14px",
+                      }}
+                    >
+                      {day ? (
+                        <>
                           <div
-                            className={`absolute left-1/2 -translate-x-1/2 border-4 border-transparent ${
-                              dayIndex >= 4 ? "top-full" : "bottom-full"
+                            className={`h-full w-full rounded-sm transition-all duration-200 ${
+                              day.isToday ? "cursor-pointer" : "cursor-default"
                             }`}
                             style={{
-                              [dayIndex >= 4
-                                ? "borderTopColor"
-                                : "borderBottomColor"]:
-                                "hsl(var(--foreground))",
+                              backgroundColor: getBackgroundColor(
+                                day.intensity,
+                              ),
+                              boxShadow: day.isToday
+                                ? "0 0 0 2px hsl(var(--foreground))"
+                                : "0 0 0 0 hsl(var(--foreground) / 0.5)",
+                              opacity: day.isToday ? 1 : 0.6,
+                            }}
+                            onClick={() =>
+                              day.isToday && handleDayClick(day.date, day.count)
+                            }
+                            onMouseEnter={(e) => {
+                              if (day.isToday) {
+                                e.currentTarget.style.boxShadow =
+                                  "0 0 0 2px hsl(var(--foreground))";
+                              }
+                            }}
+                            onMouseLeave={(e) => {
+                              if (day.isToday) {
+                                e.currentTarget.style.boxShadow =
+                                  "0 0 0 2px hsl(var(--foreground))";
+                              }
                             }}
                           />
-                        </div>
-                      </>
-                    ) : (
-                      <div className="h-full w-full" />
-                    )}
-                  </div>
-                ))}
-              </div>
-            ))}
+                          {/* Tooltip - show above for bottom rows (Thu-Sat), below for top rows (Sun-Wed) */}
+                          <div
+                            className={`pointer-events-none absolute left-1/2 z-10 hidden -translate-x-1/2 rounded px-2 py-1 text-xs whitespace-nowrap group-hover:block ${
+                              dayIndex >= 4
+                                ? "bottom-full mb-2"
+                                : "top-full mt-2"
+                            }`}
+                            style={{
+                              backgroundColor: "hsl(var(--foreground))",
+                              color: "hsl(var(--background))",
+                            }}
+                          >
+                            <div>{day.date.toLocaleDateString()}</div>
+                            <div>
+                              {day.count} / {habit.dailyGoal}
+                            </div>
+                            <div
+                              className={`absolute left-1/2 -translate-x-1/2 border-4 border-transparent ${
+                                dayIndex >= 4 ? "top-full" : "bottom-full"
+                              }`}
+                              style={{
+                                [dayIndex >= 4
+                                  ? "borderTopColor"
+                                  : "borderBottomColor"]:
+                                  "hsl(var(--foreground))",
+                              }}
+                            />
+                          </div>
+                        </>
+                      ) : (
+                        <div className="h-full w-full" />
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ))}
+            </div>
           </div>
         </div>
-      </div>
-      <div
-        className="mt-4 flex items-center justify-between text-xs"
-        style={{ color: "hsl(var(--foreground) / 0.7)" }}
-      >
-        <span>
-          {selectedYear !== null ? `Year ${selectedYear}` : `Last ${days} days`}
-        </span>
-        <div className="flex items-center gap-1">
-          <span>Less</span>
-          <div className="flex gap-1">
-            {[0, 0.25, 0.5, 0.75, 1].map((intensity, i) => (
-              <div
-                key={i}
-                className="h-3 w-3 rounded-sm"
-                style={{
-                  backgroundColor: getBackgroundColor(intensity),
-                }}
-              />
-            ))}
+        <div
+          className="mt-3 flex flex-col gap-2 text-xs sm:mt-4 sm:flex-row sm:items-center sm:justify-between"
+          style={{ color: "hsl(var(--foreground) / 0.7)" }}
+        >
+          <span>
+            {selectedYear !== null
+              ? `Year ${selectedYear}`
+              : `Last ${days} days`}
+          </span>
+          <div className="flex items-center gap-1">
+            <span className="text-xs">Less</span>
+            <div className="flex gap-1">
+              {[0, 0.25, 0.5, 0.75, 1].map((intensity, i) => (
+                <div
+                  key={i}
+                  className="h-3 w-3 rounded-sm"
+                  style={{
+                    backgroundColor: getBackgroundColor(intensity),
+                  }}
+                />
+              ))}
+            </div>
+            <span className="text-xs">More</span>
           </div>
-          <span>More</span>
         </div>
-      </div>
       </div>
 
       {/* Edit Habit Modal */}
