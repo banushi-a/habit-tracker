@@ -6,8 +6,14 @@ import { api } from "~/trpc/react";
 import { ColorPicker } from "./color-picker";
 
 const createHabitSchema = z.object({
-  name: z.string().min(1, "Name is required").max(100, "Name must be 100 characters or less"),
-  description: z.string().max(500, "Description must be 500 characters or less").optional(),
+  name: z
+    .string()
+    .min(1, "Name is required")
+    .max(100, "Name must be 100 characters or less"),
+  description: z
+    .string()
+    .max(500, "Description must be 500 characters or less")
+    .optional(),
   dailyGoal: z.number().int().positive("Daily goal must be a positive number"),
   color: z.string().regex(/^#[0-9A-Fa-f]{6}$/, "Invalid color format"),
 });
@@ -29,16 +35,23 @@ interface CreateHabitFormProps {
 /**
  * Form component for creating or editing a habit with validation.
  */
-export function CreateHabitForm({ onSuccess, onCancel, habitId, initialData }: CreateHabitFormProps) {
+export function CreateHabitForm({
+  onSuccess,
+  onCancel,
+  habitId,
+  initialData,
+}: CreateHabitFormProps) {
   const [formData, setFormData] = useState<CreateHabitInput>(
     initialData ?? {
       name: "",
       description: "",
       dailyGoal: 1,
       color: "#FFB3BA", // Default to first pastel color
-    }
+    },
   );
-  const [errors, setErrors] = useState<Partial<Record<keyof CreateHabitInput, string>>>({});
+  const [errors, setErrors] = useState<
+    Partial<Record<keyof CreateHabitInput, string>>
+  >({});
 
   const utils = api.useUtils();
   const createHabit = api.habit.create.useMutation({
@@ -84,7 +97,7 @@ export function CreateHabitForm({ onSuccess, onCancel, habitId, initialData }: C
   };
 
   const isLoading = createHabit.isPending || updateHabit.isPending;
-  const error = createHabit.error || updateHabit.error;
+  const error = createHabit.error ?? updateHabit.error;
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
@@ -98,7 +111,7 @@ export function CreateHabitForm({ onSuccess, onCancel, habitId, initialData }: C
           type="text"
           value={formData.name}
           onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-          className="rounded px-3 py-2 outline-none transition-all"
+          className="rounded px-3 py-2 transition-all outline-none"
           style={{
             backgroundColor: "hsl(var(--button-bg))",
             borderWidth: "2px",
@@ -119,8 +132,10 @@ export function CreateHabitForm({ onSuccess, onCancel, habitId, initialData }: C
         <textarea
           id="description"
           value={formData.description}
-          onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-          className="rounded px-3 py-2 outline-none transition-all"
+          onChange={(e) =>
+            setFormData({ ...formData, description: e.target.value })
+          }
+          className="rounded px-3 py-2 transition-all outline-none"
           style={{
             backgroundColor: "hsl(var(--button-bg))",
             borderWidth: "2px",
@@ -144,8 +159,13 @@ export function CreateHabitForm({ onSuccess, onCancel, habitId, initialData }: C
           type="number"
           min="1"
           value={formData.dailyGoal}
-          onChange={(e) => setFormData({ ...formData, dailyGoal: parseInt(e.target.value) || 1 })}
-          className="rounded px-3 py-2 outline-none transition-all"
+          onChange={(e) =>
+            setFormData({
+              ...formData,
+              dailyGoal: parseInt(e.target.value) || 1,
+            })
+          }
+          className="rounded px-3 py-2 transition-all outline-none"
           style={{
             backgroundColor: "hsl(var(--button-bg))",
             borderWidth: "2px",
@@ -178,14 +198,21 @@ export function CreateHabitForm({ onSuccess, onCancel, habitId, initialData }: C
           style={{ backgroundColor: "hsl(var(--button-bg))" }}
           onMouseEnter={(e) => {
             if (!isLoading) {
-              e.currentTarget.style.backgroundColor = "hsl(var(--button-bg-hover))";
+              e.currentTarget.style.backgroundColor =
+                "hsl(var(--button-bg-hover))";
             }
           }}
           onMouseLeave={(e) => {
             e.currentTarget.style.backgroundColor = "hsl(var(--button-bg))";
           }}
         >
-          {isLoading ? (habitId ? "Updating..." : "Creating...") : (habitId ? "Update Habit" : "Create Habit")}
+          {isLoading
+            ? habitId
+              ? "Updating..."
+              : "Creating..."
+            : habitId
+              ? "Update Habit"
+              : "Create Habit"}
         </button>
         <button
           type="button"
@@ -195,7 +222,8 @@ export function CreateHabitForm({ onSuccess, onCancel, habitId, initialData }: C
           style={{ backgroundColor: "hsl(var(--button-bg))" }}
           onMouseEnter={(e) => {
             if (!isLoading) {
-              e.currentTarget.style.backgroundColor = "hsl(var(--button-bg-hover))";
+              e.currentTarget.style.backgroundColor =
+                "hsl(var(--button-bg-hover))";
             }
           }}
           onMouseLeave={(e) => {
@@ -208,7 +236,10 @@ export function CreateHabitForm({ onSuccess, onCancel, habitId, initialData }: C
 
       {/* Error Message */}
       {error && (
-        <div className="rounded p-3 text-sm text-red-500" style={{ backgroundColor: "hsl(var(--button-bg))" }}>
+        <div
+          className="rounded p-3 text-sm text-red-500"
+          style={{ backgroundColor: "hsl(var(--button-bg))" }}
+        >
           Failed to {habitId ? "update" : "create"} habit: {error.message}
         </div>
       )}

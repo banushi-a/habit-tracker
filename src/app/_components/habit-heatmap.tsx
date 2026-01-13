@@ -19,6 +19,7 @@ interface HabitHeatmapProps {
   };
   entries: HabitEntry[];
   days?: number;
+  selectedYear?: number | null; // null means rolling view, number means year view
 }
 
 /**
@@ -36,6 +37,7 @@ export function HabitHeatmap({
   habit,
   entries,
   days = 365,
+  selectedYear = null,
 }: HabitHeatmapProps) {
   const [error, setError] = useState<string | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -131,26 +133,39 @@ export function HabitHeatmap({
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    // Calculate the start date (365 days ago from today)
-    const startDate = new Date(today);
-    startDate.setDate(startDate.getDate() - (days - 1));
+    let startDate: Date;
+    let endDate: Date;
+
+    if (selectedYear !== null) {
+      // Year view: show full calendar year
+      startDate = new Date(selectedYear, 0, 1); // January 1st
+      endDate = new Date(selectedYear, 11, 31); // December 31st
+      endDate.setHours(0, 0, 0, 0);
+    } else {
+      // Rolling view: show last N days
+      endDate = new Date(today);
+      startDate = new Date(today);
+      startDate.setDate(startDate.getDate() - (days - 1));
+    }
 
     // Find the Sunday before or on the start date to align the grid
     const startDayOfWeek = startDate.getDay(); // 0 = Sunday, 6 = Saturday
     const alignedStartDate = new Date(startDate);
     alignedStartDate.setDate(alignedStartDate.getDate() - startDayOfWeek);
 
-    // Calculate total days needed (from aligned start to today)
+    // Calculate total days needed (from aligned start to end date)
     const totalDays =
       Math.ceil(
-        (today.getTime() - alignedStartDate.getTime()) / (1000 * 60 * 60 * 24),
+        (endDate.getTime() - alignedStartDate.getTime()) / (1000 * 60 * 60 * 24),
       ) + 1;
 
     // Generate all days
+    const todayStr = today.toISOString().split("T")[0];
     const allDays: Array<{
       date: Date;
       count: number;
       intensity: number;
+      isToday: boolean;
     } | null> = [];
     for (let i = 0; i < totalDays; i++) {
       const date = new Date(alignedStartDate);
@@ -158,18 +173,19 @@ export function HabitHeatmap({
       const dateStr = date.toISOString().split("T")[0];
       const count = dateStr ? (entryMap.get(dateStr) ?? 0) : 0;
       const intensity = Math.min(count / habit.dailyGoal, 1);
+      const isToday = dateStr === todayStr;
 
-      allDays.push({ date, count, intensity });
+      allDays.push({ date, count, intensity, isToday });
     }
 
     // Organize into weeks (columns) with days (rows)
     const weeks: Array<
-      Array<{ date: Date; count: number; intensity: number } | null>
+      Array<{ date: Date; count: number; intensity: number; isToday: boolean } | null>
     > = [];
 
     // Pad the end to complete the current week
-    const todayDayOfWeek = today.getDay(); // 0 = Sunday, 6 = Saturday
-    const daysToAdd = 6 - todayDayOfWeek; // Days until Saturday
+    const endDayOfWeek = endDate.getDay(); // 0 = Sunday, 6 = Saturday
+    const daysToAdd = 6 - endDayOfWeek; // Days until Saturday
     for (let i = 1; i <= daysToAdd; i++) {
       allDays.push(null); // Add nulls for future days in current week
     }
@@ -180,7 +196,7 @@ export function HabitHeatmap({
     }
 
     return weeks;
-  }, [entries, days, habit.dailyGoal]);
+  }, [entries, days, habit.dailyGoal, selectedYear]);
 
   /**
    * Get background color based on intensity and habit color
@@ -290,19 +306,28 @@ export function HabitHeatmap({
                     {day ? (
                       <>
                         <div
-                          className="h-full w-full cursor-pointer rounded-sm transition-all duration-200"
+                          className={`h-full w-full rounded-sm transition-all duration-200 ${
+                            day.isToday ? "cursor-pointer" : "cursor-default"
+                          }`}
                           style={{
                             backgroundColor: getBackgroundColor(day.intensity),
-                            boxShadow: "0 0 0 0 hsl(var(--foreground) / 0.5)",
+                            boxShadow: day.isToday
+                              ? "0 0 0 2px hsl(var(--foreground))"
+                              : "0 0 0 0 hsl(var(--foreground) / 0.5)",
+                            opacity: day.isToday ? 1 : 0.6,
                           }}
-                          onClick={() => handleDayClick(day.date, day.count)}
+                          onClick={() => day.isToday && handleDayClick(day.date, day.count)}
                           onMouseEnter={(e) => {
-                            e.currentTarget.style.boxShadow =
-                              "0 0 0 2px hsl(var(--foreground) / 0.5)";
+                            if (day.isToday) {
+                              e.currentTarget.style.boxShadow =
+                                "0 0 0 2px hsl(var(--foreground))";
+                            }
                           }}
                           onMouseLeave={(e) => {
-                            e.currentTarget.style.boxShadow =
-                              "0 0 0 0 hsl(var(--foreground) / 0.5)";
+                            if (day.isToday) {
+                              e.currentTarget.style.boxShadow =
+                                "0 0 0 2px hsl(var(--foreground))";
+                            }
                           }}
                         />
                         {/* Tooltip - show above for bottom rows (Thu-Sat), below for top rows (Sun-Wed) */}
@@ -346,7 +371,9 @@ export function HabitHeatmap({
         className="mt-4 flex items-center justify-between text-xs"
         style={{ color: "hsl(var(--foreground) / 0.7)" }}
       >
-        <span>Last {days} days</span>
+        <span>
+          {selectedYear !== null ? `Year ${selectedYear}` : `Last ${days} days`}
+        </span>
         <div className="flex items-center gap-1">
           <span>Less</span>
           <div className="flex gap-1">

@@ -117,6 +117,7 @@ export const habitEntryRouter = createTRPCRouter({
 
   /**
    * Create or update an entry for a habit on a specific date
+   * Only allows updates for today's date (based on server time in UTC)
    */
   upsert: protectedProcedure
     .input(
@@ -137,9 +138,21 @@ export const habitEntryRouter = createTRPCRouter({
         throw new TRPCError({ code: "UNAUTHORIZED" });
       }
 
-      // Normalize date to start of day
+      // Normalize input date to start of day
       const normalizedDate = new Date(input.date);
       normalizedDate.setHours(0, 0, 0, 0);
+
+      // Get today's date (server time, normalized to start of day)
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      // Only allow updates for today
+      if (normalizedDate.getTime() !== today.getTime()) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Can only update today's entry",
+        });
+      }
 
       return ctx.db.habitEntry.upsert({
         where: {
