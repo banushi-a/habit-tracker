@@ -25,7 +25,7 @@ const THEME_STORAGE_KEY = "user-theme-preference";
 /**
  * Provider component for user preferences including theme settings.
  *
- * Manages theme state and persists preferences to localStorage and cookies.
+ * Manages theme state and persists preferences to localStorage.
  * Automatically applies theme changes to the document root element.
  *
  * @param props - Component props
@@ -59,11 +59,7 @@ export function UserPreferencesProvider({
       root.classList.remove("dark");
     }
 
-    // Save to localStorage
     localStorage.setItem(THEME_STORAGE_KEY, theme);
-
-    // Save to cookie for SSR
-    document.cookie = `${THEME_STORAGE_KEY}=${theme}; path=/; max-age=31536000; SameSite=Lax`;
   }, [theme, mounted]);
 
   const setTheme = (newTheme: Theme) => {
