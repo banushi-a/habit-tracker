@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { api } from "~/trpc/react";
 import { CreateHabitForm } from "./create-habit-form";
 import { HabitHeatmap } from "./habit-heatmap";
@@ -21,7 +21,28 @@ interface HabitsDashboardProps {
 export function HabitsDashboard({ days = 365 }: HabitsDashboardProps) {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [selectedYear, setSelectedYear] = useState<number | null>(null);
+  const [isInitialized, setIsInitialized] = useState(false);
   const { data: habits, isLoading } = api.habit.getAllActive.useQuery();
+
+  // Load saved year preference from localStorage on mount
+  useEffect(() => {
+    const savedYear = localStorage.getItem("habitTrackerSelectedYear");
+    if (savedYear) {
+      const yearValue = savedYear === "null" ? null : parseInt(savedYear);
+      setSelectedYear(yearValue);
+    }
+    setIsInitialized(true);
+  }, []);
+
+  // Save year preference to localStorage whenever it changes
+  useEffect(() => {
+    if (isInitialized) {
+      localStorage.setItem(
+        "habitTrackerSelectedYear",
+        selectedYear === null ? "null" : selectedYear.toString(),
+      );
+    }
+  }, [selectedYear, isInitialized]);
 
   // Fetch entries for all habits
   const habitEntriesQueries = api.useQueries((t) =>
