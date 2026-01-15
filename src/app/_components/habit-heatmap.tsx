@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { api } from "~/trpc/react";
+import { HabitCellCelebration } from "./habit-cell-celebration";
 import { Modal } from "./modal";
 import { CreateHabitForm } from "./create-habit-form";
 
@@ -41,29 +42,63 @@ export function HabitHeatmap({
 }: HabitHeatmapProps) {
   const [error, setError] = useState<string | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [celebrationPosition, setCelebrationPosition] = useState<{
+    x: number;
+    y: number;
+  } | null>(null);
   const utils = api.useUtils();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const todayCellRef = useRef<HTMLDivElement>(null);
+  const heatmapContainerRef = useRef<HTMLDivElement>(null);
 
   const upsertEntry = api.habitEntry.upsert.useMutation({
     onError: (err) => {
       setError(`Failed to update: ${err.message}`);
-      // Revert the optimistic update
+      // Revert the optimistic update by refetching
       void utils.habitEntry.getLastNDays.invalidate({ habitId: habit.id });
       // Clear error after 3 seconds
       setTimeout(() => setError(null), 3000);
     },
   });
 
-  const handleDayClick = (date: Date, currentCount: number) => {
+  const handleDayClick = (
+    date: Date,
+    currentCount: number,
+    cellElement?: HTMLElement,
+  ) => {
     // Clear any existing errors
     setError(null);
+
+    const dateStr = date.toISOString().split("T")[0]!;
 
     // If at or above goal, reset to 0, otherwise increment by 1
     const newCount = currentCount >= habit.dailyGoal ? 0 : currentCount + 1;
 
+    // Check if we just reached the goal (transition from below to at/above)
+    const wasGoalMet = currentCount >= habit.dailyGoal;
+    const isGoalMet = newCount >= habit.dailyGoal;
+
+    if (!wasGoalMet && isGoalMet && cellElement && heatmapContainerRef.current) {
+      // Calculate position relative to heatmap container
+      const heatmapRect = heatmapContainerRef.current.getBoundingClientRect();
+      const cellRect = cellElement.getBoundingClientRect();
+
+      const relativeX =
+        ((cellRect.left - heatmapRect.left + cellRect.width / 2) /
+          heatmapRect.width) *
+        100;
+      const relativeY =
+        ((cellRect.top - heatmapRect.top + cellRect.height / 2) /
+          heatmapRect.height) *
+        100;
+
+      // Trigger celebration at cell position
+      setCelebrationPosition({ x: relativeX, y: relativeY });
+      // Clear celebration after animation completes
+      setTimeout(() => setCelebrationPosition(null), 1100);
+    }
+
     // Optimistically update the UI
-    const dateStr = date.toISOString().split("T")[0];
     utils.habitEntry.getLastNDays.setData(
       { habitId: habit.id, days },
       (old) => {
@@ -118,8 +153,12 @@ export function HabitHeatmap({
     );
     const currentCount = todayEntry?.count ?? 0;
 
-    // Reuse the existing click logic
-    handleDayClick(today, currentCount);
+    // Reuse the existing click logic, passing today's cell element
+    handleDayClick(
+      today,
+      currentCount,
+      todayCellRef.current ?? undefined,
+    );
   };
 
   const heatmapData = useMemo(() => {
@@ -247,9 +286,20 @@ export function HabitHeatmap({
   return (
     <>
       <div
-        className="w-full rounded-lg p-3 transition-all duration-300 sm:p-4"
+        ref={heatmapContainerRef}
+        className="relative w-full rounded-lg p-3 transition-all duration-300 sm:p-4"
         style={{ backgroundColor: "hsl(var(--button-bg))" }}
       >
+        {/* Celebration confetti at heatmap level */}
+        {celebrationPosition && (
+          <HabitCellCelebration
+            isGoalMet={true}
+            wasGoalMet={false}
+            habitColor={habit.color}
+            originX={celebrationPosition.x / 100}
+            originY={celebrationPosition.y / 100}
+          />
+        )}
         <div className="mb-3 flex items-start justify-between sm:mb-4 sm:items-center">
           <div className="flex items-center gap-2 sm:gap-3">
             <h3 className="text-base font-semibold sm:text-lg">{habit.name}</h3>
@@ -348,8 +398,13 @@ export function HabitHeatmap({
                                 : "0 0 0 0 hsl(var(--foreground) / 0.5)",
                               opacity: day.isToday ? 1 : 0.6,
                             }}
-                            onClick={() =>
-                              day.isToday && handleDayClick(day.date, day.count)
+                            onClick={(e) =>
+                              day.isToday &&
+                              handleDayClick(
+                                day.date,
+                                day.count,
+                                e.currentTarget,
+                              )
                             }
                             onMouseEnter={(e) => {
                               if (day.isToday) {
