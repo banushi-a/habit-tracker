@@ -22,7 +22,7 @@ interface HabitHeatmapProps {
   entries: HabitEntry[];
   days?: number;
   selectedYear?: number | null; // null means rolling view, number means year view
-  dragHandleProps?: React.HTMLAttributes<HTMLDivElement>;
+  dragHandleProps?: React.HTMLAttributes<HTMLDivElement> | null;
   isDragging?: boolean;
 }
 
