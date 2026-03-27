@@ -1,6 +1,12 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import {
+  DragDropContext,
+  Droppable,
+  Draggable,
+  type DropResult,
+} from "@hello-pangea/dnd";
 import { api } from "~/trpc/react";
 import { CreateHabitForm } from "./create-habit-form";
 import { HabitHeatmap } from "./habit-heatmap";
@@ -22,7 +28,11 @@ export function HabitsDashboard({ days = 365 }: HabitsDashboardProps) {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [selectedYear, setSelectedYear] = useState<number | null>(null);
   const [isInitialized, setIsInitialized] = useState(false);
+  const [localHabits, setLocalHabits] = useState<
+    Array<{ id: string; name: string; color: string; dailyGoal: number }>
+  >([]);
   const { data: habits, isLoading } = api.habit.getAllActive.useQuery();
+  const updateOrderMutation = api.habit.updateOrder.useMutation();
 
   // Load saved year preference from localStorage on mount
   useEffect(() => {
@@ -43,6 +53,53 @@ export function HabitsDashboard({ days = 365 }: HabitsDashboardProps) {
       );
     }
   }, [selectedYear, isInitialized]);
+
+  // Sync habits to local state for drag operations
+  useEffect(() => {
+    if (habits) {
+      setLocalHabits(habits);
+    }
+  }, [habits]);
+
+  // Handle drag end
+  const handleDragEnd = async (result: DropResult) => {
+    const { destination, source } = result;
+
+    // Drop outside the list
+    if (!destination) {
+      return;
+    }
+
+    // No movement
+    if (destination.index === source.index) {
+      return;
+    }
+
+    // Reorder local state immediately for optimistic UI
+    const newHabits = Array.from(localHabits);
+    const [reorderedHabit] = newHabits.splice(source.index, 1);
+    if (reorderedHabit) {
+      newHabits.splice(destination.index, 0, reorderedHabit);
+    }
+    setLocalHabits(newHabits);
+
+    // Calculate new sort orders (use gaps of 100)
+    const habitOrders = newHabits.map((habit, index) => ({
+      id: habit.id,
+      sortOrder: index * 100,
+    }));
+
+    // Send to server
+    try {
+      await updateOrderMutation.mutateAsync({ habitOrders });
+    } catch (error) {
+      console.error("Failed to update habit order:", error);
+      // Revert on error
+      if (habits) {
+        setLocalHabits(habits);
+      }
+    }
+  };
 
   // Fetch entries for all habits
   const habitEntriesQueries = api.useQueries((t) =>
@@ -196,27 +253,57 @@ export function HabitsDashboard({ days = 365 }: HabitsDashboardProps) {
             ))}
           </select>
         </div>
-        <div className="flex flex-col gap-4">
-          {habits.map((habit, index) => {
-            const entriesQuery = habitEntriesQueries[index];
-            const entries = entriesQuery?.data ?? [];
+        <DragDropContext onDragEnd={handleDragEnd}>
+          <Droppable droppableId="habits">
+            {(provided, snapshot) => (
+              <div
+                {...provided.droppableProps}
+                ref={provided.innerRef}
+                className={`flex flex-col gap-4 transition-all duration-200 ${
+                  snapshot.isDraggingOver
+                    ? "bg-blue-500/5 rounded-lg border-2 border-dashed border-blue-500/30 p-2"
+                    : ""
+                }`}
+              >
+                {localHabits.map((habit, index) => {
+                  // Find the corresponding habit in the original habits array for entries
+                  const originalIndex = habits?.findIndex(h => h.id === habit.id) ?? -1;
+                  const entriesQuery = originalIndex >= 0 ? habitEntriesQueries[originalIndex] : null;
+                  const entries = entriesQuery?.data ?? [];
 
-            return (
-              <HabitHeatmap
-                key={habit.id}
-                habit={{
-                  id: habit.id,
-                  name: habit.name,
-                  color: habit.color,
-                  dailyGoal: habit.dailyGoal,
-                }}
-                entries={entries}
-                days={days}
-                selectedYear={selectedYear}
-              />
-            );
-          })}
-        </div>
+                  return (
+                    <Draggable key={habit.id} draggableId={habit.id} index={index}>
+                      {(provided, snapshot) => (
+                        <div
+                          ref={provided.innerRef}
+                          {...provided.draggableProps}
+                          style={{
+                            ...provided.draggableProps.style,
+                          }}
+                        >
+                          <HabitHeatmap
+                            habit={{
+                              id: habit.id,
+                              name: habit.name,
+                              color: habit.color,
+                              dailyGoal: habit.dailyGoal,
+                            }}
+                            entries={entries}
+                            days={days}
+                            selectedYear={selectedYear}
+                            dragHandleProps={provided.dragHandleProps}
+                            isDragging={snapshot.isDragging}
+                          />
+                        </div>
+                      )}
+                    </Draggable>
+                  );
+                })}
+                {provided.placeholder}
+              </div>
+            )}
+          </Droppable>
+        </DragDropContext>
       </div>
 
       {/* Create Habit Modal */}

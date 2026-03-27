@@ -5,6 +5,7 @@ import { api } from "~/trpc/react";
 import { HabitCellCelebration } from "./habit-cell-celebration";
 import { Modal } from "./modal";
 import { CreateHabitForm } from "./create-habit-form";
+import { DragHandle } from "./drag-handle";
 
 interface HabitEntry {
   date: Date;
@@ -21,6 +22,8 @@ interface HabitHeatmapProps {
   entries: HabitEntry[];
   days?: number;
   selectedYear?: number | null; // null means rolling view, number means year view
+  dragHandleProps?: React.HTMLAttributes<HTMLDivElement>;
+  isDragging?: boolean;
 }
 
 /**
@@ -39,6 +42,8 @@ export function HabitHeatmap({
   entries,
   days = 365,
   selectedYear = null,
+  dragHandleProps,
+  isDragging = false,
 }: HabitHeatmapProps) {
   const [error, setError] = useState<string | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -287,8 +292,16 @@ export function HabitHeatmap({
     <>
       <div
         ref={heatmapContainerRef}
-        className="relative w-full rounded-lg p-3 transition-all duration-300 sm:p-4"
-        style={{ backgroundColor: "hsl(var(--button-bg))" }}
+        className={`relative w-full rounded-lg p-3 transition-all duration-300 sm:p-4 ${
+          isDragging
+            ? "rotate-1 shadow-xl opacity-95 scale-105 ring-2 ring-blue-500/30 z-10"
+            : "hover:shadow-md"
+        }`}
+        style={{
+          backgroundColor: isDragging
+            ? "hsl(var(--button-bg-hover))"
+            : "hsl(var(--button-bg))"
+        }}
       >
         {/* Celebration confetti at heatmap level */}
         {celebrationPosition && (
@@ -302,6 +315,11 @@ export function HabitHeatmap({
         )}
         <div className="mb-3 flex items-start justify-between sm:mb-4 sm:items-center">
           <div className="flex items-center gap-2 sm:gap-3">
+            {dragHandleProps && (
+              <div {...dragHandleProps}>
+                <DragHandle className="p-1" />
+              </div>
+            )}
             <h3 className="text-base font-semibold sm:text-lg">{habit.name}</h3>
             <button
               onClick={handleIncrementToday}

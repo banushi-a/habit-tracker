@@ -6971,10 +6971,12 @@ export namespace Prisma {
 
   export type HabitAvgAggregateOutputType = {
     dailyGoal: number | null
+    sortOrder: number | null
   }
 
   export type HabitSumAggregateOutputType = {
     dailyGoal: number | null
+    sortOrder: number | null
   }
 
   export type HabitMinAggregateOutputType = {
@@ -6984,6 +6986,7 @@ export namespace Prisma {
     dailyGoal: number | null
     color: string | null
     isActive: boolean | null
+    sortOrder: number | null
     createdAt: Date | null
     updatedAt: Date | null
     userId: string | null
@@ -6996,6 +6999,7 @@ export namespace Prisma {
     dailyGoal: number | null
     color: string | null
     isActive: boolean | null
+    sortOrder: number | null
     createdAt: Date | null
     updatedAt: Date | null
     userId: string | null
@@ -7008,6 +7012,7 @@ export namespace Prisma {
     dailyGoal: number
     color: number
     isActive: number
+    sortOrder: number
     createdAt: number
     updatedAt: number
     userId: number
@@ -7017,10 +7022,12 @@ export namespace Prisma {
 
   export type HabitAvgAggregateInputType = {
     dailyGoal?: true
+    sortOrder?: true
   }
 
   export type HabitSumAggregateInputType = {
     dailyGoal?: true
+    sortOrder?: true
   }
 
   export type HabitMinAggregateInputType = {
@@ -7030,6 +7037,7 @@ export namespace Prisma {
     dailyGoal?: true
     color?: true
     isActive?: true
+    sortOrder?: true
     createdAt?: true
     updatedAt?: true
     userId?: true
@@ -7042,6 +7050,7 @@ export namespace Prisma {
     dailyGoal?: true
     color?: true
     isActive?: true
+    sortOrder?: true
     createdAt?: true
     updatedAt?: true
     userId?: true
@@ -7054,6 +7063,7 @@ export namespace Prisma {
     dailyGoal?: true
     color?: true
     isActive?: true
+    sortOrder?: true
     createdAt?: true
     updatedAt?: true
     userId?: true
@@ -7153,6 +7163,7 @@ export namespace Prisma {
     dailyGoal: number
     color: string
     isActive: boolean
+    sortOrder: number
     createdAt: Date
     updatedAt: Date
     userId: string
@@ -7184,6 +7195,7 @@ export namespace Prisma {
     dailyGoal?: boolean
     color?: boolean
     isActive?: boolean
+    sortOrder?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     userId?: boolean
@@ -7199,6 +7211,7 @@ export namespace Prisma {
     dailyGoal?: boolean
     color?: boolean
     isActive?: boolean
+    sortOrder?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     userId?: boolean
@@ -7212,6 +7225,7 @@ export namespace Prisma {
     dailyGoal?: boolean
     color?: boolean
     isActive?: boolean
+    sortOrder?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     userId?: boolean
@@ -7225,12 +7239,13 @@ export namespace Prisma {
     dailyGoal?: boolean
     color?: boolean
     isActive?: boolean
+    sortOrder?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     userId?: boolean
   }
 
-  export type HabitOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "name" | "description" | "dailyGoal" | "color" | "isActive" | "createdAt" | "updatedAt" | "userId", ExtArgs["result"]["habit"]>
+  export type HabitOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "name" | "description" | "dailyGoal" | "color" | "isActive" | "sortOrder" | "createdAt" | "updatedAt" | "userId", ExtArgs["result"]["habit"]>
   export type HabitInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     user?: boolean | UserDefaultArgs<ExtArgs>
     entries?: boolean | Habit$entriesArgs<ExtArgs>
@@ -7271,6 +7286,10 @@ export namespace Prisma {
        * Whether the habit is currently active
        */
       isActive: boolean
+      /**
+       * Sort order for custom habit arrangement (lower values appear first)
+       */
+      sortOrder: number
       createdAt: Date
       updatedAt: Date
       userId: string
@@ -7705,6 +7724,7 @@ export namespace Prisma {
     readonly dailyGoal: FieldRef<"Habit", 'Int'>
     readonly color: FieldRef<"Habit", 'String'>
     readonly isActive: FieldRef<"Habit", 'Boolean'>
+    readonly sortOrder: FieldRef<"Habit", 'Int'>
     readonly createdAt: FieldRef<"Habit", 'DateTime'>
     readonly updatedAt: FieldRef<"Habit", 'DateTime'>
     readonly userId: FieldRef<"Habit", 'String'>
@@ -9341,6 +9361,7 @@ export namespace Prisma {
     dailyGoal: 'dailyGoal',
     color: 'color',
     isActive: 'isActive',
+    sortOrder: 'sortOrder',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt',
     userId: 'userId'
@@ -9778,6 +9799,7 @@ export namespace Prisma {
     dailyGoal?: IntFilter<"Habit"> | number
     color?: StringFilter<"Habit"> | string
     isActive?: BoolFilter<"Habit"> | boolean
+    sortOrder?: IntFilter<"Habit"> | number
     createdAt?: DateTimeFilter<"Habit"> | Date | string
     updatedAt?: DateTimeFilter<"Habit"> | Date | string
     userId?: StringFilter<"Habit"> | string
@@ -9792,6 +9814,7 @@ export namespace Prisma {
     dailyGoal?: SortOrder
     color?: SortOrder
     isActive?: SortOrder
+    sortOrder?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     userId?: SortOrder
@@ -9809,6 +9832,7 @@ export namespace Prisma {
     dailyGoal?: IntFilter<"Habit"> | number
     color?: StringFilter<"Habit"> | string
     isActive?: BoolFilter<"Habit"> | boolean
+    sortOrder?: IntFilter<"Habit"> | number
     createdAt?: DateTimeFilter<"Habit"> | Date | string
     updatedAt?: DateTimeFilter<"Habit"> | Date | string
     userId?: StringFilter<"Habit"> | string
@@ -9823,6 +9847,7 @@ export namespace Prisma {
     dailyGoal?: SortOrder
     color?: SortOrder
     isActive?: SortOrder
+    sortOrder?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     userId?: SortOrder
@@ -9843,6 +9868,7 @@ export namespace Prisma {
     dailyGoal?: IntWithAggregatesFilter<"Habit"> | number
     color?: StringWithAggregatesFilter<"Habit"> | string
     isActive?: BoolWithAggregatesFilter<"Habit"> | boolean
+    sortOrder?: IntWithAggregatesFilter<"Habit"> | number
     createdAt?: DateTimeWithAggregatesFilter<"Habit"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"Habit"> | Date | string
     userId?: StringWithAggregatesFilter<"Habit"> | string
@@ -10243,6 +10269,7 @@ export namespace Prisma {
     dailyGoal?: number
     color?: string
     isActive?: boolean
+    sortOrder?: number
     createdAt?: Date | string
     updatedAt?: Date | string
     user: UserCreateNestedOneWithoutHabitsInput
@@ -10256,6 +10283,7 @@ export namespace Prisma {
     dailyGoal?: number
     color?: string
     isActive?: boolean
+    sortOrder?: number
     createdAt?: Date | string
     updatedAt?: Date | string
     userId: string
@@ -10269,6 +10297,7 @@ export namespace Prisma {
     dailyGoal?: IntFieldUpdateOperationsInput | number
     color?: StringFieldUpdateOperationsInput | string
     isActive?: BoolFieldUpdateOperationsInput | boolean
+    sortOrder?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     user?: UserUpdateOneRequiredWithoutHabitsNestedInput
@@ -10282,6 +10311,7 @@ export namespace Prisma {
     dailyGoal?: IntFieldUpdateOperationsInput | number
     color?: StringFieldUpdateOperationsInput | string
     isActive?: BoolFieldUpdateOperationsInput | boolean
+    sortOrder?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     userId?: StringFieldUpdateOperationsInput | string
@@ -10295,6 +10325,7 @@ export namespace Prisma {
     dailyGoal?: number
     color?: string
     isActive?: boolean
+    sortOrder?: number
     createdAt?: Date | string
     updatedAt?: Date | string
     userId: string
@@ -10307,6 +10338,7 @@ export namespace Prisma {
     dailyGoal?: IntFieldUpdateOperationsInput | number
     color?: StringFieldUpdateOperationsInput | string
     isActive?: BoolFieldUpdateOperationsInput | boolean
+    sortOrder?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -10318,6 +10350,7 @@ export namespace Prisma {
     dailyGoal?: IntFieldUpdateOperationsInput | number
     color?: StringFieldUpdateOperationsInput | string
     isActive?: BoolFieldUpdateOperationsInput | boolean
+    sortOrder?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     userId?: StringFieldUpdateOperationsInput | string
@@ -10790,6 +10823,7 @@ export namespace Prisma {
     dailyGoal?: SortOrder
     color?: SortOrder
     isActive?: SortOrder
+    sortOrder?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     userId?: SortOrder
@@ -10797,6 +10831,7 @@ export namespace Prisma {
 
   export type HabitAvgOrderByAggregateInput = {
     dailyGoal?: SortOrder
+    sortOrder?: SortOrder
   }
 
   export type HabitMaxOrderByAggregateInput = {
@@ -10806,6 +10841,7 @@ export namespace Prisma {
     dailyGoal?: SortOrder
     color?: SortOrder
     isActive?: SortOrder
+    sortOrder?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     userId?: SortOrder
@@ -10818,6 +10854,7 @@ export namespace Prisma {
     dailyGoal?: SortOrder
     color?: SortOrder
     isActive?: SortOrder
+    sortOrder?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     userId?: SortOrder
@@ -10825,6 +10862,7 @@ export namespace Prisma {
 
   export type HabitSumOrderByAggregateInput = {
     dailyGoal?: SortOrder
+    sortOrder?: SortOrder
   }
 
   export type BoolWithAggregatesFilter<$PrismaModel = never> = {
@@ -11669,6 +11707,7 @@ export namespace Prisma {
     dailyGoal?: number
     color?: string
     isActive?: boolean
+    sortOrder?: number
     createdAt?: Date | string
     updatedAt?: Date | string
     entries?: HabitEntryCreateNestedManyWithoutHabitInput
@@ -11681,6 +11720,7 @@ export namespace Prisma {
     dailyGoal?: number
     color?: string
     isActive?: boolean
+    sortOrder?: number
     createdAt?: Date | string
     updatedAt?: Date | string
     entries?: HabitEntryUncheckedCreateNestedManyWithoutHabitInput
@@ -11810,6 +11850,7 @@ export namespace Prisma {
     dailyGoal?: IntFilter<"Habit"> | number
     color?: StringFilter<"Habit"> | string
     isActive?: BoolFilter<"Habit"> | boolean
+    sortOrder?: IntFilter<"Habit"> | number
     createdAt?: DateTimeFilter<"Habit"> | Date | string
     updatedAt?: DateTimeFilter<"Habit"> | Date | string
     userId?: StringFilter<"Habit"> | string
@@ -11936,6 +11977,7 @@ export namespace Prisma {
     dailyGoal?: number
     color?: string
     isActive?: boolean
+    sortOrder?: number
     createdAt?: Date | string
     updatedAt?: Date | string
     user: UserCreateNestedOneWithoutHabitsInput
@@ -11948,6 +11990,7 @@ export namespace Prisma {
     dailyGoal?: number
     color?: string
     isActive?: boolean
+    sortOrder?: number
     createdAt?: Date | string
     updatedAt?: Date | string
     userId: string
@@ -11976,6 +12019,7 @@ export namespace Prisma {
     dailyGoal?: IntFieldUpdateOperationsInput | number
     color?: StringFieldUpdateOperationsInput | string
     isActive?: BoolFieldUpdateOperationsInput | boolean
+    sortOrder?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     user?: UserUpdateOneRequiredWithoutHabitsNestedInput
@@ -11988,6 +12032,7 @@ export namespace Prisma {
     dailyGoal?: IntFieldUpdateOperationsInput | number
     color?: StringFieldUpdateOperationsInput | string
     isActive?: BoolFieldUpdateOperationsInput | boolean
+    sortOrder?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     userId?: StringFieldUpdateOperationsInput | string
@@ -12028,6 +12073,7 @@ export namespace Prisma {
     dailyGoal?: number
     color?: string
     isActive?: boolean
+    sortOrder?: number
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -12122,6 +12168,7 @@ export namespace Prisma {
     dailyGoal?: IntFieldUpdateOperationsInput | number
     color?: StringFieldUpdateOperationsInput | string
     isActive?: BoolFieldUpdateOperationsInput | boolean
+    sortOrder?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     entries?: HabitEntryUpdateManyWithoutHabitNestedInput
@@ -12134,6 +12181,7 @@ export namespace Prisma {
     dailyGoal?: IntFieldUpdateOperationsInput | number
     color?: StringFieldUpdateOperationsInput | string
     isActive?: BoolFieldUpdateOperationsInput | boolean
+    sortOrder?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     entries?: HabitEntryUncheckedUpdateManyWithoutHabitNestedInput
@@ -12146,6 +12194,7 @@ export namespace Prisma {
     dailyGoal?: IntFieldUpdateOperationsInput | number
     color?: StringFieldUpdateOperationsInput | string
     isActive?: BoolFieldUpdateOperationsInput | boolean
+    sortOrder?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }

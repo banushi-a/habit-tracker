@@ -91,6 +91,8 @@ model Habit {
     color       String   @default("#3b82f6")
     /// Whether the habit is currently active
     isActive    Boolean  @default(true)
+    /// Sort order for custom habit arrangement (lower values appear first)
+    sortOrder   Int      @default(0)
     createdAt   DateTime @default(now())
     updatedAt   DateTime @updatedAt
 
@@ -102,6 +104,7 @@ model Habit {
 
     @@index([userId])
     @@index([userId, isActive])
+    @@index([userId, sortOrder])
 }
 
 /// Represents a daily entry for a habit

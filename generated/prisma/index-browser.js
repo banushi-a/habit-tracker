@@ -173,6 +173,7 @@ exports.Prisma.HabitScalarFieldEnum = {
   dailyGoal: 'dailyGoal',
   color: 'color',
   isActive: 'isActive',
+  sortOrder: 'sortOrder',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
   userId: 'userId'
