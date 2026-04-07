@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { api } from "~/trpc/react";
 import { HabitCellCelebration } from "./habit-cell-celebration";
 import { Modal } from "./modal";
@@ -26,7 +26,7 @@ interface HabitHeatmapProps {
   isDragging?: boolean;
 }
 
-export function HabitHeatmap({
+function HabitHeatmapInner({
   habit,
   entries,
   days = 365,
@@ -45,6 +45,16 @@ export function HabitHeatmap({
   const todayCellRef = useRef<HTMLDivElement>(null);
   const heatmapContainerRef = useRef<HTMLDivElement>(null);
 
+  // Pre-compute RGB components once per color change — avoid parseInt in the render hot-path
+  const habitRgb = useMemo(() => {
+    const hex = habit.color.replace("#", "");
+    return {
+      r: parseInt(hex.substring(0, 2), 16),
+      g: parseInt(hex.substring(2, 4), 16),
+      b: parseInt(hex.substring(4, 6), 16),
+    };
+  }, [habit.color]);
+
   const upsertEntry = api.habitEntry.upsert.useMutation({
     onError: (err) => {
       setError(`Failed to update: ${err.message}`);
@@ -53,7 +63,7 @@ export function HabitHeatmap({
     },
   });
 
-  const handleDayClick = (
+  const handleDayClick = useCallback((
     date: Date,
     currentCount: number,
     cellElement?: HTMLElement,
@@ -120,9 +130,9 @@ export function HabitHeatmap({
       date: date,
       count: newCount,
     });
-  };
+  }, [habit.id, habit.dailyGoal, days, utils, upsertEntry]);
 
-  const handleIncrementToday = () => {
+  const handleIncrementToday = useCallback(() => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const todayStr = today.toISOString().split("T")[0];
@@ -133,7 +143,7 @@ export function HabitHeatmap({
     const currentCount = todayEntry?.count ?? 0;
 
     handleDayClick(today, currentCount, todayCellRef.current ?? undefined);
-  };
+  }, [entries, handleDayClick]);
 
   const heatmapData = useMemo(() => {
     const entryMap = new Map<string, number>();
@@ -226,18 +236,11 @@ export function HabitHeatmap({
     }
   }, [heatmapData]);
 
-  const getBackgroundColor = (intensity: number) => {
-    if (intensity === 0) {
-      return "var(--fg-subtle)";
-    }
-
-    const hex = habit.color.replace("#", "");
-    const r = parseInt(hex.substring(0, 2), 16);
-    const g = parseInt(hex.substring(2, 4), 16);
-    const b = parseInt(hex.substring(4, 6), 16);
-
+  const getBackgroundColor = useCallback((intensity: number) => {
+    if (intensity === 0) return "var(--fg-subtle)";
+    const { r, g, b } = habitRgb;
     return `rgba(${r}, ${g}, ${b}, ${0.15 + intensity * 0.85})`;
-  };
+  }, [habitRgb]);
 
   const dayLabels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
@@ -253,7 +256,7 @@ export function HabitHeatmap({
     <>
       <div
         ref={heatmapContainerRef}
-        className="relative w-full rounded-2xl transition-all duration-300"
+        className="relative w-full rounded-2xl"
         style={{
           backgroundColor: isDragging ? "var(--bg-raised)" : "var(--bg-surface)",
           border: "1px solid var(--border)",
@@ -263,6 +266,7 @@ export function HabitHeatmap({
             : "0 1px 3px rgba(0,0,0,0.08)",
           transform: isDragging ? "rotate(0.5deg) scale(1.01)" : "none",
           opacity: isDragging ? 0.96 : 1,
+          transition: "background-color 300ms, box-shadow 300ms, transform 300ms, opacity 300ms",
         }}
       >
         {/* Celebration */}
@@ -303,7 +307,7 @@ export function HabitHeatmap({
               <span
                 className="rounded-full px-2 py-0.5 text-xs font-medium tabular-nums"
                 style={{
-                  backgroundColor: `rgba(${parseInt(habit.color.slice(1,3),16)}, ${parseInt(habit.color.slice(3,5),16)}, ${parseInt(habit.color.slice(5,7),16)}, 0.15)`,
+                  backgroundColor: `rgba(${habitRgb.r}, ${habitRgb.g}, ${habitRgb.b}, 0.15)`,
                   color: habit.color,
                 }}
               >
@@ -325,7 +329,7 @@ export function HabitHeatmap({
               className="flex h-7 w-7 items-center justify-center rounded-full transition-all duration-200"
               style={{
                 backgroundColor: todayProgress >= 1
-                  ? `rgba(${parseInt(habit.color.slice(1,3),16)}, ${parseInt(habit.color.slice(3,5),16)}, ${parseInt(habit.color.slice(5,7),16)}, 0.2)`
+                  ? `rgba(${habitRgb.r}, ${habitRgb.g}, ${habitRgb.b}, 0.2)`
                   : "var(--btn)",
                 color: todayProgress >= 1 ? habit.color : "var(--fg-muted)",
                 border: "1px solid var(--border)",
@@ -336,7 +340,7 @@ export function HabitHeatmap({
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.backgroundColor = todayProgress >= 1
-                  ? `rgba(${parseInt(habit.color.slice(1,3),16)}, ${parseInt(habit.color.slice(3,5),16)}, ${parseInt(habit.color.slice(5,7),16)}, 0.2)`
+                  ? `rgba(${habitRgb.r}, ${habitRgb.g}, ${habitRgb.b}, 0.2)`
                   : "var(--btn)";
                 e.currentTarget.style.color = todayProgress >= 1 ? habit.color : "var(--fg-muted)";
               }}
@@ -418,7 +422,7 @@ export function HabitHeatmap({
                               boxShadow: day.isToday
                                 ? `0 0 0 1.5px var(--accent)`
                                 : day.intensity >= 1
-                                ? `0 0 4px rgba(${parseInt(habit.color.slice(1,3),16)}, ${parseInt(habit.color.slice(3,5),16)}, ${parseInt(habit.color.slice(5,7),16)}, 0.4)`
+                                ? `0 0 4px rgba(${habitRgb.r}, ${habitRgb.g}, ${habitRgb.b}, 0.4)`
                                 : "none",
                               cursor: day.isToday ? "pointer" : "default",
                               opacity: day.isToday ? 1 : 0.75,
@@ -511,7 +515,7 @@ export function HabitHeatmap({
                     backgroundColor: getBackgroundColor(intensity),
                     boxShadow:
                       intensity >= 1
-                        ? `0 0 3px rgba(${parseInt(habit.color.slice(1,3),16)}, ${parseInt(habit.color.slice(3,5),16)}, ${parseInt(habit.color.slice(5,7),16)}, 0.4)`
+                        ? `0 0 3px rgba(${habitRgb.r}, ${habitRgb.g}, ${habitRgb.b}, 0.4)`
                         : "none",
                   }}
                 />
@@ -545,3 +549,20 @@ export function HabitHeatmap({
     </>
   );
 }
+
+// Custom comparator: skip re-render for non-dragging cards when only
+// dragHandleProps reference changes (dnd creates a new object every frame).
+export const HabitHeatmap = memo(HabitHeatmapInner, (prev, next) => {
+  return (
+    prev.habit.id === next.habit.id &&
+    prev.habit.name === next.habit.name &&
+    prev.habit.color === next.habit.color &&
+    prev.habit.dailyGoal === next.habit.dailyGoal &&
+    prev.entries === next.entries &&
+    prev.days === next.days &&
+    prev.selectedYear === next.selectedYear &&
+    prev.isDragging === next.isDragging
+    // intentionally ignoring dragHandleProps — its reference changes every
+    // frame but the underlying event handlers are stable
+  );
+});
