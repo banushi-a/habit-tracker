@@ -10,10 +10,10 @@ export default async function Home() {
   return (
     <div className="flex min-h-screen flex-col">
       <Header session={session} />
-      <main className="mx-4 my-8 flex flex-1 flex-col items-start justify-start sm:mx-12 sm:my-16 lg:mx-24 lg:my-24">
+      <main className="mx-6 my-10 flex flex-1 flex-col items-start justify-start sm:mx-10 sm:my-16 lg:mx-16 lg:my-20">
         <Hello session={session} />
         {session && (
-          <div className="mt-8 w-full sm:mt-16 lg:mt-24">
+          <div className="mt-12 w-full sm:mt-16 lg:mt-20">
             <HabitsDashboard days={365} />
           </div>
         )}

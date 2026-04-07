@@ -1,33 +1,130 @@
 @import "tailwindcss";
 
 @theme {
-  --font-sans: var(--font-manrope-sans), ui-sans-serif, system-ui, sans-serif,
-    "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  --font-sans: var(--font-dm-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-cormorant), Georgia, serif;
 }
 
-/* Light mode (default) */
+/* ─── Light Mode (Warm Parchment) ────────────────────────── */
 :root {
-  --background: 0 0% 100%;
-  --foreground: 0 0% 0%;
-  --button-bg: 0 0% 90%;
-  --button-bg-hover: 0 0% 85%;
+  --bg: #f7f3ec;
+  --bg-surface: #ede8df;
+  --bg-raised: #e6dfd3;
+  --fg: #1a1612;
+  --fg-muted: rgba(26, 22, 18, 0.5);
+  --fg-subtle: rgba(26, 22, 18, 0.08);
+  --accent: #9a7228;
+  --accent-glow: rgba(154, 114, 40, 0.18);
+  --accent-border: rgba(154, 114, 40, 0.4);
+  --border: rgba(26, 22, 18, 0.09);
+  --btn: rgba(26, 22, 18, 0.07);
+  --btn-hover: rgba(26, 22, 18, 0.13);
 }
 
-/* Dark mode - very dark gray instead of pure black */
+/* ─── Dark Mode (Warm Night) ─────────────────────────────── */
 .dark {
-  --background: 0 0% 10%;
-  --foreground: 0 0% 98%;
-  --button-bg: 0 0% 100% / 0.1;
-  --button-bg-hover: 0 0% 100% / 0.2;
+  --bg: #0e0c0a;
+  --bg-surface: #161410;
+  --bg-raised: #1c1915;
+  --fg: #f2ede6;
+  --fg-muted: rgba(242, 237, 230, 0.45);
+  --fg-subtle: rgba(242, 237, 230, 0.06);
+  --accent: #c9a84c;
+  --accent-glow: rgba(201, 168, 76, 0.14);
+  --accent-border: rgba(201, 168, 76, 0.3);
+  --border: rgba(242, 237, 230, 0.07);
+  --btn: rgba(242, 237, 230, 0.06);
+  --btn-hover: rgba(242, 237, 230, 0.11);
 }
 
-/* Smooth transitions for theme changes */
+/* ─── Base ───────────────────────────────────────────────── */
 html {
-  transition: background-color 300ms ease-in-out;
+  transition: background-color 400ms ease;
 }
 
 body {
-  background-color: hsl(var(--background));
-  color: hsl(var(--foreground));
-  transition: color 300ms ease-in-out;
+  background-color: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-sans);
+  transition: color 400ms ease, background-color 400ms ease;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Subtle grain texture overlay */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9999;
+  opacity: 0.018;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 200px 200px;
+}
+
+/* ─── Scrollbar ──────────────────────────────────────────── */
+::-webkit-scrollbar {
+  width: 3px;
+  height: 3px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 2px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--fg-muted);
+}
+
+/* ─── Selection ──────────────────────────────────────────── */
+::selection {
+  background: var(--accent-glow);
+  color: var(--fg);
+}
+
+/* ─── Animations ─────────────────────────────────────────── */
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes modal-in {
+  from {
+    opacity: 0;
+    transform: scale(0.97) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes shimmer {
+  0% { opacity: 0.4; }
+  50% { opacity: 0.7; }
+  100% { opacity: 0.4; }
+}
+
+.animate-fade-up {
+  animation: fade-up 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.animate-modal-in {
+  animation: modal-in 0.25s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.skeleton {
+  animation: shimmer 1.6s ease-in-out infinite;
+  background: var(--btn);
+  border-radius: 6px;
 }

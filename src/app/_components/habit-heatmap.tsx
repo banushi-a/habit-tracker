@@ -21,22 +21,11 @@ interface HabitHeatmapProps {
   };
   entries: HabitEntry[];
   days?: number;
-  selectedYear?: number | null; // null means rolling view, number means year view
+  selectedYear?: number | null;
   dragHandleProps?: React.HTMLAttributes<HTMLDivElement> | null;
   isDragging?: boolean;
 }
 
-/**
- * Displays a GitHub-style heatmap for a habit's daily entries.
- *
- * Shows the last 365 days in a grid where rows are days of the week (Sunday-Saturday)
- * and columns are weeks. The rightmost column is the current week.
- *
- * @param props - Component props
- * @param props.habit - The habit to display
- * @param props.entries - Array of habit entries with dates and counts
- * @param props.days - Number of days to display (default: 365)
- */
 export function HabitHeatmap({
   habit,
   entries,
@@ -59,9 +48,7 @@ export function HabitHeatmap({
   const upsertEntry = api.habitEntry.upsert.useMutation({
     onError: (err) => {
       setError(`Failed to update: ${err.message}`);
-      // Revert the optimistic update by refetching
       void utils.habitEntry.getLastNDays.invalidate({ habitId: habit.id });
-      // Clear error after 3 seconds
       setTimeout(() => setError(null), 3000);
     },
   });
@@ -71,20 +58,15 @@ export function HabitHeatmap({
     currentCount: number,
     cellElement?: HTMLElement,
   ) => {
-    // Clear any existing errors
     setError(null);
 
     const dateStr = date.toISOString().split("T")[0]!;
-
-    // If at or above goal, reset to 0, otherwise increment by 1
     const newCount = currentCount >= habit.dailyGoal ? 0 : currentCount + 1;
 
-    // Check if we just reached the goal (transition from below to at/above)
     const wasGoalMet = currentCount >= habit.dailyGoal;
     const isGoalMet = newCount >= habit.dailyGoal;
 
     if (!wasGoalMet && isGoalMet && cellElement && heatmapContainerRef.current) {
-      // Calculate position relative to heatmap container
       const heatmapRect = heatmapContainerRef.current.getBoundingClientRect();
       const cellRect = cellElement.getBoundingClientRect();
 
@@ -97,25 +79,20 @@ export function HabitHeatmap({
           heatmapRect.height) *
         100;
 
-      // Trigger celebration at cell position
       setCelebrationPosition({ x: relativeX, y: relativeY });
-      // Clear celebration after animation completes
       setTimeout(() => setCelebrationPosition(null), 1100);
     }
 
-    // Optimistically update the UI
     utils.habitEntry.getLastNDays.setData(
       { habitId: habit.id, days },
       (old) => {
         if (!old) return old;
 
-        // Find existing entry for this date
         const existingIndex = old.findIndex(
           (entry) => entry.date.toISOString().split("T")[0] === dateStr,
         );
 
         if (existingIndex >= 0) {
-          // Update existing entry
           const updated = [...old];
           updated[existingIndex] = {
             ...updated[existingIndex]!,
@@ -123,7 +100,6 @@ export function HabitHeatmap({
           };
           return updated;
         } else {
-          // Add new entry with placeholder values (will be replaced by server response)
           return [
             ...old,
             {
@@ -139,7 +115,6 @@ export function HabitHeatmap({
       },
     );
 
-    // Send the mutation to the server
     upsertEntry.mutate({
       habitId: habit.id,
       date: date,
@@ -152,22 +127,15 @@ export function HabitHeatmap({
     today.setHours(0, 0, 0, 0);
     const todayStr = today.toISOString().split("T")[0];
 
-    // Find today's count
     const todayEntry = entries.find(
       (entry) => new Date(entry.date).toISOString().split("T")[0] === todayStr,
     );
     const currentCount = todayEntry?.count ?? 0;
 
-    // Reuse the existing click logic, passing today's cell element
-    handleDayClick(
-      today,
-      currentCount,
-      todayCellRef.current ?? undefined,
-    );
+    handleDayClick(today, currentCount, todayCellRef.current ?? undefined);
   };
 
   const heatmapData = useMemo(() => {
-    // Create a map of date strings to counts
     const entryMap = new Map<string, number>();
     entries.forEach((entry) => {
       const dateStr = new Date(entry.date).toISOString().split("T")[0];
@@ -183,30 +151,25 @@ export function HabitHeatmap({
     let endDate: Date;
 
     if (selectedYear !== null) {
-      // Year view: show full calendar year
-      startDate = new Date(selectedYear, 0, 1); // January 1st
-      endDate = new Date(selectedYear, 11, 31); // December 31st
+      startDate = new Date(selectedYear, 0, 1);
+      endDate = new Date(selectedYear, 11, 31);
       endDate.setHours(0, 0, 0, 0);
     } else {
-      // Rolling view: show last N days
       endDate = new Date(today);
       startDate = new Date(today);
       startDate.setDate(startDate.getDate() - (days - 1));
     }
 
-    // Find the Sunday before or on the start date to align the grid
-    const startDayOfWeek = startDate.getDay(); // 0 = Sunday, 6 = Saturday
+    const startDayOfWeek = startDate.getDay();
     const alignedStartDate = new Date(startDate);
     alignedStartDate.setDate(alignedStartDate.getDate() - startDayOfWeek);
 
-    // Calculate total days needed (from aligned start to end date)
     const totalDays =
       Math.ceil(
         (endDate.getTime() - alignedStartDate.getTime()) /
           (1000 * 60 * 60 * 24),
       ) + 1;
 
-    // Generate all days
     const todayStr = today.toISOString().split("T")[0];
     const allDays: Array<{
       date: Date;
@@ -214,6 +177,7 @@ export function HabitHeatmap({
       intensity: number;
       isToday: boolean;
     } | null> = [];
+
     for (let i = 0; i < totalDays; i++) {
       const date = new Date(alignedStartDate);
       date.setDate(date.getDate() + i);
@@ -225,7 +189,6 @@ export function HabitHeatmap({
       allDays.push({ date, count, intensity, isToday });
     }
 
-    // Organize into weeks (columns) with days (rows)
     const weeks: Array<
       Array<{
         date: Date;
@@ -235,11 +198,10 @@ export function HabitHeatmap({
       } | null>
     > = [];
 
-    // Pad the end to complete the current week
-    const endDayOfWeek = endDate.getDay(); // 0 = Sunday, 6 = Saturday
-    const daysToAdd = 6 - endDayOfWeek; // Days until Saturday
+    const endDayOfWeek = endDate.getDay();
+    const daysToAdd = 6 - endDayOfWeek;
     for (let i = 1; i <= daysToAdd; i++) {
-      allDays.push(null); // Add nulls for future days in current week
+      allDays.push(null);
     }
 
     for (let i = 0; i < allDays.length; i += 7) {
@@ -250,60 +212,60 @@ export function HabitHeatmap({
     return weeks;
   }, [entries, days, habit.dailyGoal, selectedYear]);
 
-  // Scroll to today's cell on mount or when heatmap data changes
   useEffect(() => {
     if (todayCellRef.current && scrollContainerRef.current) {
       const scrollContainer = scrollContainerRef.current;
       const todayCell = todayCellRef.current;
 
-      // Calculate the scroll position to center today's cell
       const containerWidth = scrollContainer.clientWidth;
       const cellLeft = todayCell.offsetLeft;
       const cellWidth = todayCell.offsetWidth;
 
-      // Scroll to position today's cell in the center-right area
       const scrollPosition = cellLeft - containerWidth + cellWidth + 50;
-
       scrollContainer.scrollLeft = Math.max(0, scrollPosition);
     }
   }, [heatmapData]);
 
-  /**
-   * Get background color based on intensity and habit color
-   */
   const getBackgroundColor = (intensity: number) => {
     if (intensity === 0) {
-      return "hsl(var(--foreground) / 0.1)";
+      return "var(--fg-subtle)";
     }
 
-    // Convert hex to RGB
     const hex = habit.color.replace("#", "");
     const r = parseInt(hex.substring(0, 2), 16);
     const g = parseInt(hex.substring(2, 4), 16);
     const b = parseInt(hex.substring(4, 6), 16);
 
-    // Apply intensity
-    return `rgba(${r}, ${g}, ${b}, ${intensity})`;
+    return `rgba(${r}, ${g}, ${b}, ${0.15 + intensity * 0.85})`;
   };
 
   const dayLabels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+  // Today's entry count
+  const todayStr = new Date().toISOString().split("T")[0];
+  const todayEntry = entries.find(
+    (e) => new Date(e.date).toISOString().split("T")[0] === todayStr,
+  );
+  const todayCount = todayEntry?.count ?? 0;
+  const todayProgress = Math.min(todayCount / habit.dailyGoal, 1);
 
   return (
     <>
       <div
         ref={heatmapContainerRef}
-        className={`relative w-full rounded-lg p-3 transition-all duration-300 sm:p-4 ${
-          isDragging
-            ? "rotate-1 shadow-xl opacity-95 scale-105 ring-2 ring-blue-500/30 z-10"
-            : "hover:shadow-md"
-        }`}
+        className="relative w-full rounded-2xl transition-all duration-300"
         style={{
-          backgroundColor: isDragging
-            ? "hsl(var(--button-bg-hover))"
-            : "hsl(var(--button-bg))"
+          backgroundColor: isDragging ? "var(--bg-raised)" : "var(--bg-surface)",
+          border: "1px solid var(--border)",
+          borderTop: `2px solid ${habit.color}`,
+          boxShadow: isDragging
+            ? "0 20px 60px rgba(0,0,0,0.3)"
+            : "0 1px 3px rgba(0,0,0,0.08)",
+          transform: isDragging ? "rotate(0.5deg) scale(1.01)" : "none",
+          opacity: isDragging ? 0.96 : 1,
         }}
       >
-        {/* Celebration confetti at heatmap level */}
+        {/* Celebration */}
         {celebrationPosition && (
           <HabitCellCelebration
             isGoalMet={true}
@@ -313,108 +275,154 @@ export function HabitHeatmap({
             originY={celebrationPosition.y / 100}
           />
         )}
-        <div className="mb-3 flex items-start justify-between sm:mb-4 sm:items-center">
-          <div className="flex items-center gap-2 sm:gap-3">
+
+        {/* Card header */}
+        <div className="flex items-center justify-between px-5 pt-4 pb-3">
+          <div className="flex items-center gap-2.5">
             {dragHandleProps && (
               <div {...dragHandleProps}>
-                <DragHandle className="p-1" />
+                <DragHandle />
               </div>
             )}
-            <h3 className="text-base font-semibold sm:text-lg">{habit.name}</h3>
+
+            {/* Habit color dot */}
+            <div
+              className="h-2 w-2 flex-shrink-0 rounded-full"
+              style={{ backgroundColor: habit.color }}
+            />
+
+            <h3
+              className="text-base font-medium"
+              style={{ color: "var(--fg)" }}
+            >
+              {habit.name}
+            </h3>
+
+            {/* Today progress indicator */}
+            {todayCount > 0 && (
+              <span
+                className="rounded-full px-2 py-0.5 text-xs font-medium tabular-nums"
+                style={{
+                  backgroundColor: `rgba(${parseInt(habit.color.slice(1,3),16)}, ${parseInt(habit.color.slice(3,5),16)}, ${parseInt(habit.color.slice(5,7),16)}, 0.15)`,
+                  color: habit.color,
+                }}
+              >
+                {todayCount}/{habit.dailyGoal}
+              </span>
+            )}
+          </div>
+
+          <div className="flex items-center gap-1.5">
+            {error && (
+              <span className="text-xs" style={{ color: "#c44b3b" }}>
+                {error}
+              </span>
+            )}
+
+            {/* Increment today button */}
             <button
               onClick={handleIncrementToday}
-              className="inline-flex h-6 w-6 items-center justify-center rounded-full text-xs transition-all duration-200"
-              style={{ backgroundColor: "hsl(var(--foreground) / 0.1)" }}
+              className="flex h-7 w-7 items-center justify-center rounded-full transition-all duration-200"
+              style={{
+                backgroundColor: todayProgress >= 1
+                  ? `rgba(${parseInt(habit.color.slice(1,3),16)}, ${parseInt(habit.color.slice(3,5),16)}, ${parseInt(habit.color.slice(5,7),16)}, 0.2)`
+                  : "var(--btn)",
+                color: todayProgress >= 1 ? habit.color : "var(--fg-muted)",
+                border: "1px solid var(--border)",
+              }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor =
-                  "hsl(var(--foreground) / 0.2)";
+                e.currentTarget.style.backgroundColor = "var(--btn-hover)";
+                e.currentTarget.style.color = "var(--fg)";
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor =
-                  "hsl(var(--foreground) / 0.1)";
+                e.currentTarget.style.backgroundColor = todayProgress >= 1
+                  ? `rgba(${parseInt(habit.color.slice(1,3),16)}, ${parseInt(habit.color.slice(3,5),16)}, ${parseInt(habit.color.slice(5,7),16)}, 0.2)`
+                  : "var(--btn)";
+                e.currentTarget.style.color = todayProgress >= 1 ? habit.color : "var(--fg-muted)";
               }}
-              title="Increment today's count"
+              title="Log today"
             >
-              ↑
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="18 15 12 9 6 15" />
+              </svg>
             </button>
-          </div>
-          <div className="flex flex-col items-end gap-2 sm:flex-row sm:items-center sm:gap-3">
-            {error && (
-              <div
-                className="rounded px-2 py-1 text-xs text-red-500 sm:px-3 sm:text-sm"
-                style={{ backgroundColor: "hsl(var(--background))" }}
-              >
-                {error}
-              </div>
-            )}
+
+            {/* Edit button */}
             <button
               onClick={() => setIsEditModalOpen(true)}
-              className="inline-flex h-6 w-6 items-center justify-center rounded-full text-xs transition-all duration-200"
-              style={{ backgroundColor: "hsl(var(--foreground) / 0.1)" }}
+              className="flex h-7 w-7 items-center justify-center rounded-full transition-all duration-200"
+              style={{
+                backgroundColor: "var(--btn)",
+                color: "var(--fg-muted)",
+                border: "1px solid var(--border)",
+              }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor =
-                  "hsl(var(--foreground) / 0.2)";
+                e.currentTarget.style.backgroundColor = "var(--btn-hover)";
+                e.currentTarget.style.color = "var(--fg)";
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor =
-                  "hsl(var(--foreground) / 0.1)";
+                e.currentTarget.style.backgroundColor = "var(--btn)";
+                e.currentTarget.style.color = "var(--fg-muted)";
               }}
-              title="Edit habit settings"
+              title="Edit habit"
             >
-              ⚙
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+              </svg>
             </button>
           </div>
         </div>
+
+        {/* Heatmap grid */}
         <div
           ref={scrollContainerRef}
-          className="overflow-x-auto overflow-y-visible"
+          className="overflow-x-auto overflow-y-visible px-5 pb-4"
         >
-          <div className="flex gap-1">
-            {/* Day labels column */}
-            <div className="flex flex-col gap-1 pr-3">
+          <div className="flex gap-[3px]">
+            {/* Day labels */}
+            <div className="flex flex-col gap-[3px] pr-2">
               {dayLabels.map((label, i) => (
                 <div
                   key={i}
-                  className="flex items-center justify-end text-xs"
+                  className="flex items-center justify-end text-[10px]"
                   style={{
-                    height: "14px",
-                    color: "hsl(var(--foreground) / 0.7)",
+                    height: "13px",
+                    color: "var(--fg-muted)",
+                    fontVariantNumeric: "tabular-nums",
+                    letterSpacing: "0.02em",
                   }}
                 >
-                  {i % 2 === 1 ? label : ""}{" "}
-                  {/* Show only Mon, Wed, Fri labels */}
+                  {i % 2 === 1 ? label : ""}
                 </div>
               ))}
             </div>
 
-            {/* Weeks grid */}
-            <div className="flex gap-1 pr-8">
+            {/* Weeks */}
+            <div className="flex gap-[3px] pr-8">
               {heatmapData.map((week, weekIndex) => (
-                <div key={weekIndex} className="flex flex-col gap-1 py-2">
+                <div key={weekIndex} className="flex flex-col gap-[3px] py-[1px]">
                   {week.map((day, dayIndex) => (
                     <div
                       key={dayIndex}
                       ref={day?.isToday ? todayCellRef : null}
                       className="group relative shrink-0"
-                      style={{
-                        width: "14px",
-                        height: "14px",
-                      }}
+                      style={{ width: "13px", height: "13px" }}
                     >
                       {day ? (
                         <>
                           <div
-                            className={`h-full w-full rounded-sm transition-all duration-200 ${
-                              day.isToday ? "cursor-pointer" : "cursor-default"
-                            }`}
+                            className="h-full w-full rounded-sm transition-all duration-150"
                             style={{
-                              backgroundColor: getBackgroundColor(
-                                day.intensity,
-                              ),
+                              backgroundColor: getBackgroundColor(day.intensity),
                               boxShadow: day.isToday
-                                ? "0 0 0 2px hsl(var(--foreground))"
-                                : "0 0 0 0 hsl(var(--foreground) / 0.5)",
-                              opacity: day.isToday ? 1 : 0.6,
+                                ? `0 0 0 1.5px var(--accent)`
+                                : day.intensity >= 1
+                                ? `0 0 4px rgba(${parseInt(habit.color.slice(1,3),16)}, ${parseInt(habit.color.slice(3,5),16)}, ${parseInt(habit.color.slice(5,7),16)}, 0.4)`
+                                : "none",
+                              cursor: day.isToday ? "pointer" : "default",
+                              opacity: day.isToday ? 1 : 0.75,
+                              transform: "scale(1)",
                             }}
                             onClick={(e) =>
                               day.isToday &&
@@ -426,33 +434,34 @@ export function HabitHeatmap({
                             }
                             onMouseEnter={(e) => {
                               if (day.isToday) {
-                                e.currentTarget.style.boxShadow =
-                                  "0 0 0 2px hsl(var(--foreground))";
+                                e.currentTarget.style.transform = "scale(1.2)";
                               }
                             }}
                             onMouseLeave={(e) => {
-                              if (day.isToday) {
-                                e.currentTarget.style.boxShadow =
-                                  "0 0 0 2px hsl(var(--foreground))";
-                              }
+                              e.currentTarget.style.transform = "scale(1)";
                             }}
                           />
-                          {/* Tooltip - show above for bottom rows (Thu-Sat), below for top rows (Sun-Wed) */}
+                          {/* Tooltip */}
                           <div
-                            className={`pointer-events-none absolute left-1/2 z-10 hidden -translate-x-1/2 rounded px-2 py-1 text-xs whitespace-nowrap group-hover:block ${
-                              dayIndex >= 4
-                                ? "bottom-full mb-2"
-                                : "top-full mt-2"
+                            className={`pointer-events-none absolute left-1/2 z-20 hidden -translate-x-1/2 whitespace-nowrap rounded-lg px-2.5 py-1.5 text-[11px] group-hover:block ${
+                              dayIndex >= 4 ? "bottom-full mb-2" : "top-full mt-2"
                             }`}
                             style={{
-                              backgroundColor: "hsl(var(--foreground))",
-                              color: "hsl(var(--background))",
+                              backgroundColor: "var(--fg)",
+                              color: "var(--bg)",
+                              boxShadow: "0 4px 12px rgba(0,0,0,0.3)",
                             }}
                           >
-                            <div>{day.date.toLocaleDateString()}</div>
-                            <div>
+                            <div className="font-medium">
+                              {day.date.toLocaleDateString("en-US", {
+                                month: "short",
+                                day: "numeric",
+                              })}
+                            </div>
+                            <div style={{ opacity: 0.7 }}>
                               {day.count} / {habit.dailyGoal}
                             </div>
+                            {/* Arrow */}
                             <div
                               className={`absolute left-1/2 -translate-x-1/2 border-4 border-transparent ${
                                 dayIndex >= 4 ? "top-full" : "bottom-full"
@@ -460,8 +469,7 @@ export function HabitHeatmap({
                               style={{
                                 [dayIndex >= 4
                                   ? "borderTopColor"
-                                  : "borderBottomColor"]:
-                                  "hsl(var(--foreground))",
+                                  : "borderBottomColor"]: "var(--fg)",
                               }}
                             />
                           </div>
@@ -476,34 +484,47 @@ export function HabitHeatmap({
             </div>
           </div>
         </div>
+
+        {/* Footer */}
         <div
-          className="mt-3 flex flex-col gap-2 text-xs sm:mt-4 sm:flex-row sm:items-center sm:justify-between"
-          style={{ color: "hsl(var(--foreground) / 0.7)" }}
+          className="flex items-center justify-between border-t px-5 py-3"
+          style={{ borderColor: "var(--border)" }}
         >
-          <span>
-            {selectedYear !== null
-              ? `Year ${selectedYear}`
-              : `Last ${days} days`}
+          <span
+            className="text-[11px] tracking-wide"
+            style={{ color: "var(--fg-muted)" }}
+          >
+            {selectedYear !== null ? `${selectedYear}` : `Last ${days} days`}
           </span>
-          <div className="flex items-center gap-1">
-            <span className="text-xs">Less</span>
-            <div className="flex gap-1">
+          <div className="flex items-center gap-1.5">
+            <span className="text-[10px]" style={{ color: "var(--fg-muted)" }}>
+              Less
+            </span>
+            <div className="flex gap-[3px]">
               {[0, 0.25, 0.5, 0.75, 1].map((intensity, i) => (
                 <div
                   key={i}
-                  className="h-3 w-3 rounded-sm"
+                  className="rounded-sm"
                   style={{
+                    width: "11px",
+                    height: "11px",
                     backgroundColor: getBackgroundColor(intensity),
+                    boxShadow:
+                      intensity >= 1
+                        ? `0 0 3px rgba(${parseInt(habit.color.slice(1,3),16)}, ${parseInt(habit.color.slice(3,5),16)}, ${parseInt(habit.color.slice(5,7),16)}, 0.4)`
+                        : "none",
                   }}
                 />
               ))}
             </div>
-            <span className="text-xs">More</span>
+            <span className="text-[10px]" style={{ color: "var(--fg-muted)" }}>
+              More
+            </span>
           </div>
         </div>
       </div>
 
-      {/* Edit Habit Modal */}
+      {/* Edit Modal */}
       <Modal
         isOpen={isEditModalOpen}
         onClose={() => setIsEditModalOpen(false)}

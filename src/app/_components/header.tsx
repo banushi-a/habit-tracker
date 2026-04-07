@@ -10,32 +10,26 @@ interface HeaderProps {
   session: Session | null;
 }
 
-/**
- * Header component for the application.
- *
- * @param props - Component props
- * @param props.session - The authenticated user session, or null if not authenticated
- * @returns The header element
- */
 export function Header({ session }: HeaderProps) {
   const { theme } = useUserPreferences();
 
   return (
-    <header className="flex items-center justify-between p-4">
-      {/* Logo */}
+    <header
+      className="flex items-center justify-between px-6 py-5 sm:px-10 lg:px-16"
+      style={{ borderBottom: "1px solid var(--border)" }}
+    >
       <Image
         src="/logo/logo.svg"
         alt="Ritmo"
         width={32}
         height={32}
-        className="h-14 w-auto transition-all"
+        className="h-10 w-auto transition-opacity duration-300 hover:opacity-70"
         style={{
           filter: theme === "light" ? "invert(1)" : "invert(0)",
         }}
       />
 
-      {/* Right side buttons */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2">
         <ThemeToggle />
         <AuthButton session={session} />
       </div>

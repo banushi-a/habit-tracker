@@ -2,44 +2,32 @@ interface DragHandleProps {
   className?: string;
 }
 
-/**
- * A visual drag handle component that displays a 3x2 grid of dots
- * to indicate that an element can be dragged to reorder.
- */
 export function DragHandle({ className = "" }: DragHandleProps) {
   return (
     <div
-      className={`flex flex-col items-center justify-center cursor-grab active:cursor-grabbing transition-all duration-200 hover:scale-110 hover:opacity-80 ${className}`}
+      className={`flex flex-col items-center justify-center cursor-grab active:cursor-grabbing transition-opacity duration-200 hover:opacity-100 ${className}`}
       role="button"
       tabIndex={0}
       aria-label="Drag to reorder"
       title="Drag to reorder habits"
+      style={{ opacity: 0.35 }}
     >
-      <div className="grid grid-cols-2 gap-0.5 p-1">
-        <div
-          className="h-1.5 w-1.5 rounded-full transition-all duration-200"
-          style={{ backgroundColor: "hsl(var(--foreground) / 0.4)" }}
-        />
-        <div
-          className="h-1.5 w-1.5 rounded-full transition-all duration-200"
-          style={{ backgroundColor: "hsl(var(--foreground) / 0.4)" }}
-        />
-        <div
-          className="h-1.5 w-1.5 rounded-full transition-all duration-200"
-          style={{ backgroundColor: "hsl(var(--foreground) / 0.4)" }}
-        />
-        <div
-          className="h-1.5 w-1.5 rounded-full transition-all duration-200"
-          style={{ backgroundColor: "hsl(var(--foreground) / 0.4)" }}
-        />
-        <div
-          className="h-1.5 w-1.5 rounded-full transition-all duration-200"
-          style={{ backgroundColor: "hsl(var(--foreground) / 0.4)" }}
-        />
-        <div
-          className="h-1.5 w-1.5 rounded-full transition-all duration-200"
-          style={{ backgroundColor: "hsl(var(--foreground) / 0.4)" }}
-        />
+      <div className="flex flex-col gap-[3px] p-1">
+        {[0, 1, 2].map((row) => (
+          <div key={row} className="flex gap-[3px]">
+            {[0, 1].map((col) => (
+              <div
+                key={col}
+                className="rounded-full"
+                style={{
+                  width: "3px",
+                  height: "3px",
+                  backgroundColor: "var(--fg)",
+                }}
+              />
+            ))}
+          </div>
+        ))}
       </div>
     </div>
   );

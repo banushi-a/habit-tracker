@@ -7,74 +7,97 @@ interface ColorPickerProps {
   onChange: (color: string) => void;
 }
 
-const PASTEL_COLORS = [
-  "#FFB3BA", // Light Pink
-  "#FFDFBA", // Light Peach
-  "#FFFFBA", // Light Yellow
-  "#BAFFC9", // Light Mint
-  "#BAE1FF", // Light Blue
-  "#C9C9FF", // Light Lavender
-  "#FFB3E6", // Light Rose
-  "#E0BBE4", // Light Purple
+const PALETTE = [
+  { hex: "#c44b3b", label: "Rust" },
+  { hex: "#c9834c", label: "Ochre" },
+  { hex: "#c9a84c", label: "Amber" },
+  { hex: "#7a9e7e", label: "Sage" },
+  { hex: "#4a8b8b", label: "Teal" },
+  { hex: "#6b87a8", label: "Blue" },
+  { hex: "#8c6b8a", label: "Plum" },
+  { hex: "#b8694e", label: "Terra" },
 ];
 
-/**
- * Color picker component with predefined pastel colors and custom color option.
- */
 export function ColorPicker({ value, onChange }: ColorPickerProps) {
-  const [showCustomPicker, setShowCustomPicker] = useState(false);
+  const [showCustom, setShowCustom] = useState(false);
 
   return (
     <div className="flex flex-col gap-3">
-      {/* Predefined Colors */}
-      <div className="grid grid-cols-8 gap-2">
-        {PASTEL_COLORS.map((color) => (
-          <button
-            key={color}
-            type="button"
-            onClick={() => {
-              onChange(color);
-              setShowCustomPicker(false);
-            }}
-            className="h-10 w-10 rounded-full border-2 transition-all hover:scale-110"
-            style={{
-              backgroundColor: color,
-              borderColor: value === color ? "hsl(var(--foreground))" : "transparent",
-            }}
-            aria-label={`Select color ${color}`}
-          />
-        ))}
+      <div className="flex flex-wrap gap-2">
+        {PALETTE.map(({ hex, label }) => {
+          const isSelected = value.toLowerCase() === hex.toLowerCase();
+          return (
+            <button
+              key={hex}
+              type="button"
+              onClick={() => {
+                onChange(hex);
+                setShowCustom(false);
+              }}
+              title={label}
+              className="relative h-8 w-8 rounded-full transition-all duration-200 hover:scale-110"
+              style={{
+                backgroundColor: hex,
+                boxShadow: isSelected
+                  ? `0 0 0 2px var(--bg), 0 0 0 4px ${hex}`
+                  : "none",
+              }}
+              aria-label={`Select ${label}`}
+            />
+          );
+        })}
       </div>
 
-      {/* Custom Color Section */}
       <div className="flex items-center gap-3">
         <button
           type="button"
-          onClick={() => setShowCustomPicker(!showCustomPicker)}
-          className="rounded px-3 py-2 text-sm transition-all duration-300"
+          onClick={() => setShowCustom(!showCustom)}
+          className="rounded-full px-3 py-1.5 text-xs font-medium transition-all duration-200"
           style={{
-            backgroundColor: "hsl(var(--button-bg))",
+            backgroundColor: "var(--btn)",
+            color: "var(--fg-muted)",
+            border: "1px solid var(--border)",
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = "hsl(var(--button-bg-hover))";
+            e.currentTarget.style.backgroundColor = "var(--btn-hover)";
+            e.currentTarget.style.color = "var(--fg)";
           }}
           onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = "hsl(var(--button-bg))";
+            e.currentTarget.style.backgroundColor = "var(--btn)";
+            e.currentTarget.style.color = "var(--fg-muted)";
           }}
         >
-          {showCustomPicker ? "Hide" : "Custom Color"}
+          {showCustom ? "Hide custom" : "Custom color"}
         </button>
 
-        {showCustomPicker && (
+        {showCustom && (
           <div className="flex items-center gap-2">
-            <input
-              type="color"
-              value={value}
-              onChange={(e) => onChange(e.target.value)}
-              className="h-10 w-16 cursor-pointer rounded border-2"
-              style={{ borderColor: "hsl(var(--button-bg))" }}
-            />
-            <span className="text-sm" style={{ color: "hsl(var(--foreground) / 0.7)" }}>
+            <div
+              className="relative h-7 w-7 overflow-hidden rounded-full"
+              style={{ border: "2px solid var(--border)" }}
+            >
+              <input
+                type="color"
+                value={value}
+                onChange={(e) => onChange(e.target.value)}
+                className="absolute inset-0 h-full w-full cursor-pointer scale-150 opacity-0"
+                style={{ opacity: 0 }}
+              />
+              <div
+                className="absolute inset-0 rounded-full"
+                style={{ backgroundColor: value }}
+              />
+              <input
+                type="color"
+                value={value}
+                onChange={(e) => onChange(e.target.value)}
+                className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+              />
+            </div>
+            <span
+              className="font-mono text-xs tracking-wider uppercase"
+              style={{ color: "var(--fg-muted)" }}
+            >
               {value.toUpperCase()}
             </span>
           </div>

@@ -16,14 +16,6 @@ interface HabitsDashboardProps {
   days?: number;
 }
 
-/**
- * Dashboard component that displays all active habits with their heatmaps.
- *
- * Fetches the user's active habits and their entries, then renders a heatmap for each.
- *
- * @param props - Component props
- * @param props.days - Number of days to display in each heatmap (default: 365)
- */
 export function HabitsDashboard({ days = 365 }: HabitsDashboardProps) {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [selectedYear, setSelectedYear] = useState<number | null>(null);
@@ -34,7 +26,6 @@ export function HabitsDashboard({ days = 365 }: HabitsDashboardProps) {
   const { data: habits, isLoading } = api.habit.getAllActive.useQuery();
   const updateOrderMutation = api.habit.updateOrder.useMutation();
 
-  // Load saved year preference from localStorage on mount
   useEffect(() => {
     const savedYear = localStorage.getItem("habitTrackerSelectedYear");
     if (savedYear) {
@@ -44,7 +35,6 @@ export function HabitsDashboard({ days = 365 }: HabitsDashboardProps) {
     setIsInitialized(true);
   }, []);
 
-  // Save year preference to localStorage whenever it changes
   useEffect(() => {
     if (isInitialized) {
       localStorage.setItem(
@@ -54,28 +44,18 @@ export function HabitsDashboard({ days = 365 }: HabitsDashboardProps) {
     }
   }, [selectedYear, isInitialized]);
 
-  // Sync habits to local state for drag operations
   useEffect(() => {
     if (habits) {
       setLocalHabits(habits);
     }
   }, [habits]);
 
-  // Handle drag end
   const handleDragEnd = async (result: DropResult) => {
     const { destination, source } = result;
 
-    // Drop outside the list
-    if (!destination) {
-      return;
-    }
+    if (!destination) return;
+    if (destination.index === source.index) return;
 
-    // No movement
-    if (destination.index === source.index) {
-      return;
-    }
-
-    // Reorder local state immediately for optimistic UI
     const newHabits = Array.from(localHabits);
     const [reorderedHabit] = newHabits.splice(source.index, 1);
     if (reorderedHabit) {
@@ -83,32 +63,27 @@ export function HabitsDashboard({ days = 365 }: HabitsDashboardProps) {
     }
     setLocalHabits(newHabits);
 
-    // Calculate new sort orders (use gaps of 100)
     const habitOrders = newHabits.map((habit, index) => ({
       id: habit.id,
       sortOrder: index * 100,
     }));
 
-    // Send to server
     try {
       await updateOrderMutation.mutateAsync({ habitOrders });
     } catch (error) {
       console.error("Failed to update habit order:", error);
-      // Revert on error
       if (habits) {
         setLocalHabits(habits);
       }
     }
   };
 
-  // Fetch entries for all habits
   const habitEntriesQueries = api.useQueries((t) =>
     (habits ?? []).map((habit) =>
       t.habitEntry.getLastNDays({ habitId: habit.id, days }),
     ),
   );
 
-  // Calculate earliest year from all habit entries
   const earliestYear = useMemo(() => {
     const currentYear = new Date().getFullYear();
     let earliest = currentYear;
@@ -131,7 +106,6 @@ export function HabitsDashboard({ days = 365 }: HabitsDashboardProps) {
     return earliest;
   }, [habitEntriesQueries]);
 
-  // Generate available years for selector
   const availableYears = useMemo(() => {
     const currentYear = new Date().getFullYear();
     const years: number[] = [];
@@ -143,13 +117,13 @@ export function HabitsDashboard({ days = 365 }: HabitsDashboardProps) {
 
   if (isLoading) {
     return (
-      <div className="flex flex-col gap-4 sm:gap-6">
+      <div className="flex flex-col gap-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-bold sm:text-3xl">Your Habits</h2>
+          <div className="skeleton h-8 w-32" />
         </div>
-        <div className="flex flex-col gap-4">
-          <div className="h-32 animate-pulse rounded-lg bg-white/10" />
-          <div className="h-32 animate-pulse rounded-lg bg-white/10" />
+        <div className="flex flex-col gap-3">
+          <div className="skeleton h-40 w-full" style={{ borderRadius: "16px" }} />
+          <div className="skeleton h-40 w-full" style={{ borderRadius: "16px" }} />
         </div>
       </div>
     );
@@ -158,38 +132,66 @@ export function HabitsDashboard({ days = 365 }: HabitsDashboardProps) {
   if (!habits || habits.length === 0) {
     return (
       <>
-        <div className="flex flex-col gap-4 sm:gap-6">
-          <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-bold sm:text-3xl">Your Habits</h2>
+        <div
+          className="animate-fade-up flex flex-col gap-6"
+          style={{ animationDelay: "0.15s" }}
+        >
+          <div className="flex items-center gap-4">
+            <h2
+              className="text-3xl font-normal italic sm:text-4xl"
+              style={{ fontFamily: "var(--font-display)", color: "var(--fg)" }}
+            >
+              Your Habits
+            </h2>
           </div>
-          <div className="flex items-center gap-3">
+
+          <div
+            className="flex flex-col items-center justify-center gap-5 rounded-2xl py-16 text-center"
+            style={{
+              backgroundColor: "var(--bg-surface)",
+              border: "1px solid var(--border)",
+            }}
+          >
+            <div
+              className="flex h-12 w-12 items-center justify-center rounded-full"
+              style={{
+                backgroundColor: "var(--accent-glow)",
+                border: "1px solid var(--accent-border)",
+              }}
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10" />
+                <line x1="12" y1="8" x2="12" y2="16" />
+                <line x1="8" y1="12" x2="16" y2="12" />
+              </svg>
+            </div>
+            <div>
+              <p className="text-sm font-medium" style={{ color: "var(--fg)" }}>
+                No habits yet
+              </p>
+              <p className="mt-1 text-xs" style={{ color: "var(--fg-muted)" }}>
+                Start building your daily rhythm
+              </p>
+            </div>
             <button
               onClick={() => setIsCreateModalOpen(true)}
-              className="inline-flex h-10 w-10 items-center justify-center rounded-full text-xl font-bold transition-all duration-300"
-              style={{ backgroundColor: "hsl(var(--button-bg))" }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor =
-                  "hsl(var(--button-bg-hover))";
+              className="rounded-full px-6 py-2.5 text-sm font-medium transition-all duration-200"
+              style={{
+                backgroundColor: "var(--accent)",
+                color: "#0e0c0a",
               }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = "hsl(var(--button-bg))";
-              }}
+              onMouseEnter={(e) => { e.currentTarget.style.opacity = "0.85"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.opacity = "1"; }}
             >
-              +
+              Create first habit
             </button>
-            <p
-              className="text-base sm:text-lg"
-              style={{ color: "hsl(var(--foreground) / 0.7)" }}
-            >
-              Create your first habit!
-            </p>
           </div>
         </div>
 
         <Modal
           isOpen={isCreateModalOpen}
           onClose={() => setIsCreateModalOpen(false)}
-          title="Create New Habit"
+          title="New Habit"
         >
           <CreateHabitForm
             onSuccess={() => setIsCreateModalOpen(false)}
@@ -202,26 +204,47 @@ export function HabitsDashboard({ days = 365 }: HabitsDashboardProps) {
 
   return (
     <>
-      <div className="flex flex-col gap-4 sm:gap-6">
+      <div
+        className="animate-fade-up flex flex-col gap-5"
+        style={{ animationDelay: "0.15s" }}
+      >
+        {/* Section header */}
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-3">
-            <h2 className="text-2xl font-bold sm:text-3xl">Your Habits</h2>
+          <div className="flex items-center gap-4">
+            <h2
+              className="text-3xl font-normal italic sm:text-4xl"
+              style={{ fontFamily: "var(--font-display)", color: "var(--fg)" }}
+            >
+              Your Habits
+            </h2>
             <button
               onClick={() => setIsCreateModalOpen(true)}
-              className="inline-flex h-10 w-10 items-center justify-center rounded-full text-xl font-bold transition-all duration-300"
-              style={{ backgroundColor: "hsl(var(--button-bg))" }}
+              className="flex h-8 w-8 items-center justify-center rounded-full transition-all duration-200"
+              style={{
+                backgroundColor: "var(--btn)",
+                color: "var(--fg-muted)",
+                border: "1px solid var(--border)",
+              }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor =
-                  "hsl(var(--button-bg-hover))";
+                e.currentTarget.style.backgroundColor = "var(--accent-glow)";
+                e.currentTarget.style.borderColor = "var(--accent-border)";
+                e.currentTarget.style.color = "var(--accent)";
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = "hsl(var(--button-bg))";
+                e.currentTarget.style.backgroundColor = "var(--btn)";
+                e.currentTarget.style.borderColor = "var(--border)";
+                e.currentTarget.style.color = "var(--fg-muted)";
               }}
-              title="Create another habit to track"
+              title="Create a new habit"
             >
-              +
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19" />
+                <line x1="5" y1="12" x2="19" y2="12" />
+              </svg>
             </button>
           </div>
+
+          {/* Year selector */}
           <select
             value={selectedYear ?? ""}
             onChange={(e) =>
@@ -229,20 +252,23 @@ export function HabitsDashboard({ days = 365 }: HabitsDashboardProps) {
                 e.target.value === "" ? null : parseInt(e.target.value),
               )
             }
-            className="cursor-pointer appearance-none rounded py-2 pr-10 pl-4 text-sm transition-all outline-none"
+            className="cursor-pointer appearance-none rounded-full py-2 pr-8 pl-4 text-xs font-medium transition-all duration-200 outline-none"
             style={{
-              backgroundColor: "hsl(var(--button-bg))",
-              backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`,
-              backgroundPosition: "right 0.75rem center",
+              backgroundColor: "var(--btn)",
+              color: "var(--fg)",
+              border: "1px solid var(--border)",
+              backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%238a7f74' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`,
+              backgroundPosition: "right 0.6rem center",
               backgroundRepeat: "no-repeat",
-              backgroundSize: "1.5em 1.5em",
+              backgroundSize: "1.2em 1.2em",
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor =
-                "hsl(var(--button-bg-hover))";
+              e.currentTarget.style.backgroundColor = "var(--btn-hover)";
+              e.currentTarget.style.borderColor = "var(--accent-border)";
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = "hsl(var(--button-bg))";
+              e.currentTarget.style.backgroundColor = "var(--btn)";
+              e.currentTarget.style.borderColor = "var(--border)";
             }}
           >
             <option value="">Last 365 days</option>
@@ -253,33 +279,46 @@ export function HabitsDashboard({ days = 365 }: HabitsDashboardProps) {
             ))}
           </select>
         </div>
+
+        {/* Habits list */}
         <DragDropContext onDragEnd={handleDragEnd}>
           <Droppable droppableId="habits">
             {(provided, snapshot) => (
               <div
                 {...provided.droppableProps}
                 ref={provided.innerRef}
-                className={`flex flex-col gap-4 transition-all duration-200 ${
-                  snapshot.isDraggingOver
-                    ? "bg-blue-500/5 rounded-lg border-2 border-dashed border-blue-500/30 p-2"
-                    : ""
-                }`}
+                className="flex flex-col gap-3 transition-all duration-200"
+                style={{
+                  padding: snapshot.isDraggingOver ? "8px" : "0",
+                  borderRadius: snapshot.isDraggingOver ? "16px" : "0",
+                  border: snapshot.isDraggingOver
+                    ? "1px dashed var(--accent-border)"
+                    : "1px solid transparent",
+                  backgroundColor: snapshot.isDraggingOver
+                    ? "var(--accent-glow)"
+                    : "transparent",
+                }}
               >
                 {localHabits.map((habit, index) => {
-                  // Find the corresponding habit in the original habits array for entries
-                  const originalIndex = habits?.findIndex(h => h.id === habit.id) ?? -1;
-                  const entriesQuery = originalIndex >= 0 ? habitEntriesQueries[originalIndex] : null;
+                  const originalIndex =
+                    habits?.findIndex((h) => h.id === habit.id) ?? -1;
+                  const entriesQuery =
+                    originalIndex >= 0
+                      ? habitEntriesQueries[originalIndex]
+                      : null;
                   const entries = entriesQuery?.data ?? [];
 
                   return (
-                    <Draggable key={habit.id} draggableId={habit.id} index={index}>
+                    <Draggable
+                      key={habit.id}
+                      draggableId={habit.id}
+                      index={index}
+                    >
                       {(provided, snapshot) => (
                         <div
                           ref={provided.innerRef}
                           {...provided.draggableProps}
-                          style={{
-                            ...provided.draggableProps.style,
-                          }}
+                          style={{ ...provided.draggableProps.style }}
                         >
                           <HabitHeatmap
                             habit={{
@@ -306,11 +345,10 @@ export function HabitsDashboard({ days = 365 }: HabitsDashboardProps) {
         </DragDropContext>
       </div>
 
-      {/* Create Habit Modal */}
       <Modal
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
-        title="Create New Habit"
+        title="New Habit"
       >
         <CreateHabitForm
           onSuccess={() => setIsCreateModalOpen(false)}

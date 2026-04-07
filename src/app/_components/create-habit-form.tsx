@@ -32,9 +32,26 @@ interface CreateHabitFormProps {
   };
 }
 
-/**
- * Form component for creating or editing a habit with validation.
- */
+const labelStyle: React.CSSProperties = {
+  fontSize: "11px",
+  fontWeight: 500,
+  letterSpacing: "0.1em",
+  textTransform: "uppercase",
+  color: "var(--fg-muted)",
+};
+
+const inputStyle: React.CSSProperties = {
+  backgroundColor: "var(--btn)",
+  color: "var(--fg)",
+  border: "1px solid var(--border)",
+  borderRadius: "10px",
+  padding: "10px 14px",
+  fontSize: "14px",
+  outline: "none",
+  width: "100%",
+  transition: "border-color 0.2s",
+};
+
 export function CreateHabitForm({
   onSuccess,
   onCancel,
@@ -46,7 +63,7 @@ export function CreateHabitForm({
       name: "",
       description: "",
       dailyGoal: 1,
-      color: "#FFB3BA", // Default to first pastel color
+      color: "#c9a84c",
     },
   );
   const [errors, setErrors] = useState<
@@ -71,7 +88,6 @@ export function CreateHabitForm({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Validate form data
     const result = createHabitSchema.safeParse(formData);
 
     if (!result.success) {
@@ -85,13 +101,10 @@ export function CreateHabitForm({
       return;
     }
 
-    // Clear errors and submit
     setErrors({});
     if (habitId) {
-      // Update existing habit
       updateHabit.mutate({ id: habitId, ...result.data });
     } else {
-      // Create new habit
       createHabit.mutate(result.data);
     }
   };
@@ -100,62 +113,62 @@ export function CreateHabitForm({
   const error = createHabit.error ?? updateHabit.error;
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-      {/* Name Input */}
+    <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+      {/* Name */}
       <div className="flex flex-col gap-2">
-        <label htmlFor="name" className="text-sm font-medium">
-          Name *
-        </label>
+        <label style={labelStyle}>Name *</label>
         <input
-          id="name"
           type="text"
           value={formData.name}
           onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-          className="rounded px-3 py-2 transition-all outline-none"
           style={{
-            backgroundColor: "hsl(var(--button-bg))",
-            borderWidth: "2px",
-            borderColor: errors.name ? "#ef4444" : "transparent",
+            ...inputStyle,
+            borderColor: errors.name ? "#c44b3b" : "var(--border)",
+          }}
+          onFocus={(e) => {
+            e.currentTarget.style.borderColor = "var(--accent-border)";
+          }}
+          onBlur={(e) => {
+            e.currentTarget.style.borderColor = errors.name ? "#c44b3b" : "var(--border)";
           }}
           placeholder="e.g., Drink Water"
         />
         {errors.name && (
-          <span className="text-sm text-red-500">{errors.name}</span>
+          <span className="text-xs" style={{ color: "#c44b3b" }}>{errors.name}</span>
         )}
       </div>
 
-      {/* Description Input */}
+      {/* Description */}
       <div className="flex flex-col gap-2">
-        <label htmlFor="description" className="text-sm font-medium">
-          Description
-        </label>
+        <label style={labelStyle}>Description</label>
         <textarea
-          id="description"
           value={formData.description}
           onChange={(e) =>
             setFormData({ ...formData, description: e.target.value })
           }
-          className="rounded px-3 py-2 transition-all outline-none"
           style={{
-            backgroundColor: "hsl(var(--button-bg))",
-            borderWidth: "2px",
-            borderColor: errors.description ? "#ef4444" : "transparent",
+            ...inputStyle,
+            borderColor: errors.description ? "#c44b3b" : "var(--border)",
+            resize: "none",
           }}
-          placeholder="e.g., Drink 8 glasses of water daily"
-          rows={3}
+          onFocus={(e) => {
+            e.currentTarget.style.borderColor = "var(--accent-border)";
+          }}
+          onBlur={(e) => {
+            e.currentTarget.style.borderColor = errors.description ? "#c44b3b" : "var(--border)";
+          }}
+          placeholder="Optional note about this habit"
+          rows={2}
         />
         {errors.description && (
-          <span className="text-sm text-red-500">{errors.description}</span>
+          <span className="text-xs" style={{ color: "#c44b3b" }}>{errors.description}</span>
         )}
       </div>
 
-      {/* Daily Goal Input */}
+      {/* Daily Goal */}
       <div className="flex flex-col gap-2">
-        <label htmlFor="dailyGoal" className="text-sm font-medium">
-          Daily Goal *
-        </label>
+        <label style={labelStyle}>Daily Goal *</label>
         <input
-          id="dailyGoal"
           type="number"
           min="1"
           value={formData.dailyGoal}
@@ -165,80 +178,85 @@ export function CreateHabitForm({
               dailyGoal: parseInt(e.target.value) || 1,
             })
           }
-          className="rounded px-3 py-2 transition-all outline-none"
           style={{
-            backgroundColor: "hsl(var(--button-bg))",
-            borderWidth: "2px",
-            borderColor: errors.dailyGoal ? "#ef4444" : "transparent",
+            ...inputStyle,
+            borderColor: errors.dailyGoal ? "#c44b3b" : "var(--border)",
+            width: "120px",
+          }}
+          onFocus={(e) => {
+            e.currentTarget.style.borderColor = "var(--accent-border)";
+          }}
+          onBlur={(e) => {
+            e.currentTarget.style.borderColor = errors.dailyGoal ? "#c44b3b" : "var(--border)";
           }}
         />
         {errors.dailyGoal && (
-          <span className="text-sm text-red-500">{errors.dailyGoal}</span>
+          <span className="text-xs" style={{ color: "#c44b3b" }}>{errors.dailyGoal}</span>
         )}
       </div>
 
-      {/* Color Picker */}
+      {/* Color */}
       <div className="flex flex-col gap-2">
-        <label className="text-sm font-medium">Color *</label>
+        <label style={labelStyle}>Color *</label>
         <ColorPicker
           value={formData.color}
           onChange={(color) => setFormData({ ...formData, color })}
         />
         {errors.color && (
-          <span className="text-sm text-red-500">{errors.color}</span>
+          <span className="text-xs" style={{ color: "#c44b3b" }}>{errors.color}</span>
         )}
       </div>
 
-      {/* Action Buttons */}
-      <div className="mt-4 flex gap-3">
+      {/* Buttons */}
+      <div className="mt-2 flex gap-3">
         <button
           type="submit"
           disabled={isLoading}
-          className="flex-1 rounded px-4 py-2 font-semibold transition-all duration-300 disabled:opacity-50"
-          style={{ backgroundColor: "hsl(var(--button-bg))" }}
+          className="flex-1 rounded-full py-2.5 text-sm font-medium transition-all duration-200 disabled:opacity-50"
+          style={{
+            backgroundColor: "var(--accent)",
+            color: "#0e0c0a",
+          }}
           onMouseEnter={(e) => {
-            if (!isLoading) {
-              e.currentTarget.style.backgroundColor =
-                "hsl(var(--button-bg-hover))";
-            }
+            if (!isLoading) e.currentTarget.style.opacity = "0.85";
           }}
           onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = "hsl(var(--button-bg))";
+            e.currentTarget.style.opacity = "1";
           }}
         >
           {isLoading
-            ? habitId
-              ? "Updating..."
-              : "Creating..."
-            : habitId
-              ? "Update Habit"
-              : "Create Habit"}
+            ? habitId ? "Saving…" : "Creating…"
+            : habitId ? "Save changes" : "Create habit"}
         </button>
         <button
           type="button"
           onClick={onCancel}
           disabled={isLoading}
-          className="rounded px-4 py-2 font-semibold transition-all duration-300 disabled:opacity-50"
-          style={{ backgroundColor: "hsl(var(--button-bg))" }}
+          className="rounded-full px-5 py-2.5 text-sm font-medium transition-all duration-200 disabled:opacity-50"
+          style={{
+            backgroundColor: "var(--btn)",
+            color: "var(--fg)",
+            border: "1px solid var(--border)",
+          }}
           onMouseEnter={(e) => {
-            if (!isLoading) {
-              e.currentTarget.style.backgroundColor =
-                "hsl(var(--button-bg-hover))";
-            }
+            if (!isLoading) e.currentTarget.style.backgroundColor = "var(--btn-hover)";
           }}
           onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = "hsl(var(--button-bg))";
+            e.currentTarget.style.backgroundColor = "var(--btn)";
           }}
         >
           Cancel
         </button>
       </div>
 
-      {/* Error Message */}
       {error && (
         <div
-          className="rounded p-3 text-sm text-red-500"
-          style={{ backgroundColor: "hsl(var(--button-bg))" }}
+          className="rounded-xl p-3 text-xs"
+          style={{
+            backgroundColor: "rgba(196, 75, 59, 0.1)",
+            color: "#c44b3b",
+            border: "1px solid rgba(196, 75, 59, 0.2)",
+          }}
         >
           Failed to {habitId ? "update" : "create"} habit: {error.message}
         </div>

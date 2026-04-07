@@ -5,29 +5,23 @@ interface AuthButtonProps {
   session: Session | null;
 }
 
-/**
- * Authentication button component that displays sign in or sign out options.
- *
- * Shows a "Sign in" button for unauthenticated users and a "Sign out" button
- * for authenticated users.
- *
- * @param props - Component props
- * @param props.session - The authenticated user session, or null if not authenticated
- * @returns A link button for authentication
- */
 export function AuthButton({ session }: AuthButtonProps) {
   return (
     <Link
       href={session ? "/api/auth/signout" : "/api/auth/signin"}
-      className="rounded-full px-10 py-3 font-semibold no-underline transition-all duration-300"
+      className="rounded-full px-5 py-2 text-sm font-medium no-underline transition-all duration-200"
       style={{
-        backgroundColor: "hsl(var(--button-bg))",
+        backgroundColor: "var(--btn)",
+        color: "var(--fg)",
+        border: "1px solid var(--border)",
       }}
       onMouseEnter={(e) => {
-        e.currentTarget.style.backgroundColor = "hsl(var(--button-bg-hover))";
+        e.currentTarget.style.backgroundColor = "var(--btn-hover)";
+        e.currentTarget.style.borderColor = "var(--accent-border)";
       }}
       onMouseLeave={(e) => {
-        e.currentTarget.style.backgroundColor = "hsl(var(--button-bg))";
+        e.currentTarget.style.backgroundColor = "var(--btn)";
+        e.currentTarget.style.borderColor = "var(--border)";
       }}
     >
       {session ? "Sign out" : "Sign in"}
