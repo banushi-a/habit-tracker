@@ -15,8 +15,13 @@ export function Header({ session }: HeaderProps) {
 
   return (
     <header
-      className="flex items-center justify-between px-6 py-5 sm:px-10 lg:px-16"
-      style={{ borderBottom: "1px solid var(--border)" }}
+      className="sticky top-0 z-40 flex items-center justify-between px-6 py-4 sm:px-10 lg:px-16"
+      style={{
+        backgroundColor: "var(--bg-header)",
+        backdropFilter: "blur(20px) saturate(180%)",
+        WebkitBackdropFilter: "blur(20px) saturate(180%)",
+        borderBottom: "1px solid var(--border)",
+      }}
     >
       <Image
         src="/logo/logo.svg"

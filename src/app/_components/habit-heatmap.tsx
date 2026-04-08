@@ -36,6 +36,7 @@ function HabitHeatmapInner({
 }: HabitHeatmapProps) {
   const [error, setError] = useState<string | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
   const [celebrationPosition, setCelebrationPosition] = useState<{
     x: number;
     y: number;
@@ -257,18 +258,30 @@ function HabitHeatmapInner({
       <div
         ref={heatmapContainerRef}
         className="relative w-full rounded-2xl"
+        onMouseEnter={() => !isDragging && setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
         style={{
           backgroundColor: isDragging ? "var(--bg-raised)" : "var(--bg-surface)",
           border: "1px solid var(--border)",
           borderTop: `2px solid ${habit.color}`,
           boxShadow: isDragging
-            ? "0 20px 60px rgba(0,0,0,0.3)"
-            : "0 1px 3px rgba(0,0,0,0.08)",
+            ? "var(--shadow-elevated)"
+            : isHovered
+            ? "var(--shadow-hover)"
+            : "var(--shadow-card)",
           transform: isDragging ? "rotate(0.5deg) scale(1.01)" : "none",
           opacity: isDragging ? 0.96 : 1,
           transition: "background-color 300ms, box-shadow 300ms, transform 300ms, opacity 300ms",
         }}
       >
+        {/* Inner color wash from top accent border */}
+        <div
+          className="pointer-events-none absolute inset-x-0 top-0 h-20 rounded-t-2xl"
+          style={{
+            background: `linear-gradient(to bottom, rgba(${habitRgb.r}, ${habitRgb.g}, ${habitRgb.b}, 0.07) 0%, transparent 100%)`,
+          }}
+        />
+
         {/* Celebration */}
         {celebrationPosition && (
           <HabitCellCelebration
