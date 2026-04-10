@@ -10,6 +10,7 @@ import {
 import { api } from "~/trpc/react";
 import { CreateHabitForm } from "./create-habit-form";
 import { HabitHeatmap } from "./habit-heatmap";
+import { HabitStackedBar } from "./habit-stacked-bar";
 import { Modal } from "./modal";
 
 interface HabitsDashboardProps {
@@ -279,6 +280,17 @@ export function HabitsDashboard({ days = 365 }: HabitsDashboardProps) {
             ))}
           </select>
         </div>
+
+        {/* 30-day stacked bar overview */}
+        {(() => {
+          const habitsWithEntries = localHabits.map((habit) => {
+            const originalIndex = habits?.findIndex((h) => h.id === habit.id) ?? -1;
+            const entries =
+              originalIndex >= 0 ? (habitEntriesQueries[originalIndex]?.data ?? []) : [];
+            return { ...habit, entries };
+          });
+          return <HabitStackedBar habitsWithEntries={habitsWithEntries} />;
+        })()}
 
         {/* Habits list */}
         <DragDropContext onDragEnd={handleDragEnd}>
